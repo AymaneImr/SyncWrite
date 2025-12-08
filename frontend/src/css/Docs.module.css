@@ -1,0 +1,46 @@
+.pageWrap {
+  padding: 60px 0;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+
+.heading {
+  font-size: 32px;
+  margin: 0;
+  font-weight: 600;
+}
+
+
+.sub {
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+
+.grid {
+  display: flex;
+  gap: 40px;
+  margin-top: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
+.hint {
+  margin-top: 30px;
+  color: #9ca3af;
+  max-width: 600px;
+}
+
+
+.uploadInfo {
+  margin-top: 20px;
+  background: #f8fafc;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+}

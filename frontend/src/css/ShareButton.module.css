@@ -1,0 +1,185 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.dialog {
+  width: 520px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: #1f2937;
+}
+
+.inviteRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px 0;
+}
+
+.emailInput {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.roleSelect {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.inviteButton {
+  background: #111827;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+
+.accessList {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 18px;
+  padding-right: 6px;
+}
+
+.accessRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.emailLabel {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.roleSelectSmall {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.linkBox {
+  display: flex;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.linkBox input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.copyBtn {
+  background: #eee;
+  border-radius: 6px;
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.doneBtn {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.shareButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #444;
+  padding: 0 10px;
+}
+
+.shareButton:hover {
+  color: #111;
+}
