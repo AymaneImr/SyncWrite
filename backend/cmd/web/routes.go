@@ -30,4 +30,14 @@ func RegisterRoutes(r *gin.Engine) {
 		//docs.PUT("/save/:id", handlers.SaveDocument)
 	}
 
+	// Document's Collaborators routes (share docs links)
+	share := r.Group("api/documents/:id")
+	share.Use(utils.Auth())
+	{
+		share.POST("/invite", handlers.InviteUser)
+		share.GET("/collaborators", handlers.GetCollaborators)
+		share.PUT("/collaborator/:userId", handlers.UpdateCollaboratorPermission)
+		share.DELETE("/collaborator/:userId", handlers.DeleteColabborator)
+	}
+
 }
