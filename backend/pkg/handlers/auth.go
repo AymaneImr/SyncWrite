@@ -120,7 +120,11 @@ func Login(r *gin.Context) {
 		ExpiresAt:    time.Now().Add(30 * 24 * time.Hour).Unix(),
 		IsRevoked:    false,
 	}
-	fmt.Println(session.IsRevoked)
+
+	if err := db.Db.Create(&session).Error; err != nil {
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user session "})
+		return
+	}
 
 	r.JSON(200, gin.H{
 		"message":       "Login successful",
