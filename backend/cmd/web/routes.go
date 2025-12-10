@@ -25,6 +25,7 @@ func RegisterRoutes(r *gin.Engine) {
 		docs.POST("/create", handlers.CreateDocument)
 		docs.GET("/load/:id", utils.DocumentAccess(), handlers.LoadDocument)
 		docs.GET("/load/:id", handlers.LoadDocuments)
+		docs.PUT("/update/:id", utils.DocumentAccess(), handlers.UpdateTitle)
 		docs.PUT("/update/:id", utils.DocumentAccess(), handlers.UpdateDocument)
 		docs.DELETE("/delete/:id", utils.DocumentAccess(), handlers.DeleteDocument)
 		//docs.PUT("/save/:id", handlers.SaveDocument)

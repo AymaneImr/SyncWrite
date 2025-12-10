@@ -4,7 +4,9 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
+
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -75,13 +77,18 @@ func LoadDocument(r *gin.Context) {
 	r.JSON(http.StatusOK, gin.H{"document": doc})
 }
 
-func UpdateDocument(r *gin.Context) {
+func UpdateTitle(r *gin.Context) {
 	doc_id := r.Param("id")
 	user_id := r.GetUint("user_id")
 
+	access := r.GetString("access_level")
+	if access != "owner" {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Only owner can rename document"})
+		return
+	}
+
 	var body struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
+		Title string `json:"title"`
 	}
 
 	if err := r.BindJSON(&body); err != nil {
@@ -98,8 +105,43 @@ func UpdateDocument(r *gin.Context) {
 	}
 
 	doc.Title = body.Title
+	doc.LastEditedBy = strconv.FormatUint(uint64(user_id), 10)
+	doc.UpdatedAt = time.Now().Unix()
+
+	db.Db.Save(&doc)
+
+	r.JSON(http.StatusOK, gin.H{"message": "Document title updated", "document": doc})
+}
+
+func UpdateDocument(r *gin.Context) {
+	doc_id := r.Param("id")
+	user_id := r.GetUint("user_id")
+
+	access := r.GetString("access_level")
+	if !utils.CanEdit(access) {
+		r.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to edit this document"})
+		return
+	}
+
+	var body struct {
+		Content string `json:"content"`
+	}
+
+	if err := r.BindJSON(&body); err != nil {
+		r.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
+		return
+	}
+
+	var doc models.Document
+	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
+
+	if err != nil {
+		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
 	doc.Content = body.Content
-	doc.LastEditedBy = string(user_id)
+	doc.LastEditedBy = strconv.FormatUint(uint64(user_id), 10)
 	doc.UpdatedAt = time.Now().Unix()
 
 	db.Db.Save(&doc)
@@ -111,6 +153,12 @@ func DeleteDocument(r *gin.Context) {
 
 	doc_id := r.Param("id")
 	user_id := r.GetUint("user_id")
+
+	access := r.GetString("access_level")
+	if access != "owner" {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Only document owner can delete it"})
+		return
+	}
 
 	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).Delete(&models.Document{}).Error
 

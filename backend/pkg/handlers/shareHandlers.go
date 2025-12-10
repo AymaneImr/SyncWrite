@@ -18,6 +18,12 @@ func InviteUser(r *gin.Context) {
 	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
 	doc_id := uint(docID64)
 
+	access := r.GetString("access_level")
+	if access != "owner" {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Only the owner can invite collaborators"})
+		return
+	}
+
 	var body struct {
 		Email      string `json:"email"`
 		Permission string `json:"permission"`
@@ -92,6 +98,12 @@ func UpdateCollaboratorPermission(r *gin.Context) {
 	owner_id := r.GetUint("user_id")
 	user_id := uint(userID64)
 
+	access := r.GetString("access_level")
+	if access != "owner" {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Only owner can update collaborator permissions"})
+		return
+	}
+
 	var body struct {
 		Permission string `json:"permission"`
 	}
@@ -130,6 +142,18 @@ func DeleteColabborator(r *gin.Context) {
 	doc_id := uint(docID64)
 	owner_id := r.GetUint("user_id")
 	user_id := uint(userID64)
+
+	access := r.GetString("access_level")
+	if access != "owner" {
+		r.JSON(403, gin.H{"error": "Only owner can remove collaborators"})
+		return
+	}
+
+	// TODO: will be available once shareable ownership is implemented
+	if owner_id == user_id {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Owner cannot remove themselves"})
+		return
+	}
 
 	var doc models.Document
 	if err := db.Db.Where("id = ? AND owner_id = ?", doc_id, owner_id).First(&doc).Error; err != nil {

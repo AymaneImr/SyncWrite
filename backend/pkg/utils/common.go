@@ -10,3 +10,7 @@ func GenerateDocumentLink() string {
 	rand.Read(b)
 	return hex.EncodeToString(b)
 }
+
+func CanEdit(access string) bool {
+	return access == "owner" || access == "read-write"
+}
