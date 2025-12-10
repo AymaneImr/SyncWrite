@@ -168,3 +168,39 @@ func DeleteColabborator(r *gin.Context) {
 
 	r.JSON(http.StatusOK, gin.H{"message": "Collaborator removed"})
 }
+
+func OpenByLink(r *gin.Context) {
+	link := r.Param("link")
+	user_idStr := r.GetString("user_id")
+
+	userID64, _ := strconv.ParseUint(user_idStr, 10, 64)
+	user_id := uint(userID64)
+
+	var doc models.Document
+	if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
+		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	if user_id == doc.OwnerID {
+		r.JSON(
+			http.StatusOK,
+			gin.H{
+				"document":     doc,
+				"access_level": "owner",
+			},
+		)
+	}
+
+	var collaborator models.DocumentCollaborator
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc.ID, user_id).First(&collaborator).Error; err != nil {
+		r.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this document"})
+		return
+	}
+
+	r.JSON(http.StatusOK,
+		gin.H{
+			"document":     doc,
+			"access_level": collaborator.Permission,
+		})
+}

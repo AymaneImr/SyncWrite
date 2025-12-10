@@ -14,3 +14,9 @@ func GenerateDocumentLink() string {
 func CanEdit(access string) bool {
 	return access == "owner" || access == "read-write"
 }
+
+func GenerateSessionToken() string {
+	b := make([]byte, 12)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}

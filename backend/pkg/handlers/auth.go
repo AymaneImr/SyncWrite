@@ -6,7 +6,6 @@ import (
 	"document_editor/pkg/utils"
 
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 

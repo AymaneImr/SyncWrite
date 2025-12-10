@@ -63,8 +63,11 @@ func LoadDocuments(r *gin.Context) {
 }
 
 func LoadDocument(r *gin.Context) {
-	doc_id := r.Param("id")
+	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
+
+	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	doc_id := uint(docID64)
 
 	var doc models.Document
 	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
@@ -78,8 +81,11 @@ func LoadDocument(r *gin.Context) {
 }
 
 func UpdateTitle(r *gin.Context) {
-	doc_id := r.Param("id")
+	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
+
+	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	doc_id := uint(docID64)
 
 	access := r.GetString("access_level")
 	if access != "owner" {
@@ -114,8 +120,11 @@ func UpdateTitle(r *gin.Context) {
 }
 
 func UpdateDocument(r *gin.Context) {
-	doc_id := r.Param("id")
+	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
+
+	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	doc_id := uint(docID64)
 
 	access := r.GetString("access_level")
 	if !utils.CanEdit(access) {
@@ -151,8 +160,11 @@ func UpdateDocument(r *gin.Context) {
 
 func DeleteDocument(r *gin.Context) {
 
-	doc_id := r.Param("id")
+	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
+
+	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	doc_id := uint(docID64)
 
 	access := r.GetString("access_level")
 	if access != "owner" {

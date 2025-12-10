@@ -23,11 +23,16 @@ func RegisterRoutes(r *gin.Engine) {
 	docs.Use(utils.Auth())
 	{
 		docs.POST("/create", handlers.CreateDocument)
-		docs.GET("/load/:id", utils.DocumentAccess(), handlers.LoadDocument)
-		docs.GET("/load/:id", handlers.LoadDocuments)
-		docs.PUT("/update/:id", utils.DocumentAccess(), handlers.UpdateTitle)
-		docs.PUT("/update/:id", utils.DocumentAccess(), handlers.UpdateDocument)
-		docs.DELETE("/delete/:id", utils.DocumentAccess(), handlers.DeleteDocument)
+		docs.GET("/:id/load", utils.DocumentAccess(), handlers.LoadDocument)
+		docs.GET("/:id/load", handlers.LoadDocuments)
+		docs.GET("/:link/open", utils.Auth(), handlers.OpenByLink)
+		docs.PUT("/:id/update", utils.DocumentAccess(), handlers.UpdateTitle)
+		docs.PUT("/:id/update", utils.DocumentAccess(), handlers.UpdateDocument)
+		docs.DELETE("/:id/delete", utils.DocumentAccess(), handlers.DeleteDocument)
+
+		docs.PUT("/:id/session/start", utils.DocumentAccess(), handlers.StartDocumentSession)
+		docs.PUT("/:id/session/end", utils.DocumentAccess(), handlers.EndDocumentSession)
+		docs.GET("/:id/session/active", utils.DocumentAccess(), handlers.GetActiveUsers)
 		//docs.PUT("/save/:id", handlers.SaveDocument)
 	}
 
@@ -37,8 +42,8 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		share.POST("/invite", utils.DocumentAccess(), handlers.InviteUser)
 		share.GET("/collaborators", utils.DocumentAccess(), handlers.GetCollaborators)
-		share.PUT("/collaborator/:userId", utils.DocumentAccess(), handlers.UpdateCollaboratorPermission)
-		share.DELETE("/collaborator/:userId", utils.DocumentAccess(), handlers.DeleteColabborator)
+		share.PUT("/:userId/collaborator", utils.DocumentAccess(), handlers.UpdateCollaboratorPermission)
+		share.DELETE("/:userId/collaborator", utils.DocumentAccess(), handlers.DeleteColabborator)
 	}
 
 }
