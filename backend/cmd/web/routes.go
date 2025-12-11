@@ -3,6 +3,7 @@ package main
 import (
 	"document_editor/pkg/handlers"
 	"document_editor/pkg/utils"
+	"document_editor/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,6 +45,16 @@ func RegisterRoutes(r *gin.Engine) {
 		share.GET("/collaborators", utils.DocumentAccess(), handlers.GetCollaborators)
 		share.PUT("/:userId/collaborator", utils.DocumentAccess(), handlers.UpdateCollaboratorPermission)
 		share.DELETE("/:userId/collaborator", utils.DocumentAccess(), handlers.DeleteColabborator)
+	}
+
+	hub := ws.NewHub()
+	go hub.Run()
+
+	wsGroup := r.Group("/ws")
+	wsGroup.Use(utils.Auth())
+	wsGroup.Use(utils.DocumentAccess())
+	{
+		wsGroup.GET("/document/:id", ws.DocumentWebSocket(hub))
 	}
 
 }
