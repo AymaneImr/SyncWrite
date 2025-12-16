@@ -119,7 +119,7 @@ func UpdateTitle(r *gin.Context) {
 	r.JSON(http.StatusOK, gin.H{"message": "Document title updated", "document": doc})
 }
 
-func UpdateDocument(r *gin.Context) {
+func UpdateContent(r *gin.Context) {
 	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
 

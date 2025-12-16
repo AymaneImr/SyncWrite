@@ -25,10 +25,10 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		docs.POST("/create", handlers.CreateDocument)
 		docs.GET("/:id/load", utils.DocumentAccess(), handlers.LoadDocument)
-		docs.GET("/:id/load", handlers.LoadDocuments)
-		docs.GET("/:link/open", utils.Auth(), handlers.OpenByLink)
-		docs.PUT("/:id/update", utils.DocumentAccess(), handlers.UpdateTitle)
-		docs.PUT("/:id/update", utils.DocumentAccess(), handlers.UpdateDocument)
+		docs.GET("/:id/loadAll", handlers.LoadDocuments)
+		docs.GET("/link/:link/open", utils.Auth(), handlers.OpenByLink)
+		docs.PUT("/:id/updateTitle", utils.DocumentAccess(), handlers.UpdateTitle)
+		docs.PUT("/:id/UpdateContent", utils.DocumentAccess(), handlers.UpdateContent)
 		docs.DELETE("/:id/delete", utils.DocumentAccess(), handlers.DeleteDocument)
 
 		docs.PUT("/:id/session/start", utils.DocumentAccess(), handlers.StartDocumentSession)
