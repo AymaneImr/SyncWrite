@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"document_editor/pkg/config"
+	"document_editor/pkg/utils"
 	"net/http"
 	"strconv"
 
@@ -24,6 +26,23 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 		docid64, _ := strconv.ParseUint(doc_idStr, 10, 64)
 		doc_id := uint(docid64)
 
+		tokenString := r.Query("token")
+		if tokenString == "" {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+			return
+		}
+
+		claims, err := utils.ParseToken(tokenString, config.Env.JWT_SECRET)
+		if err != nil {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+
+		if !utils.HasDocumentAccess(claims.UserID, doc_id) {
+			r.JSON(http.StatusForbidden, gin.H{"error": "no access to document"})
+			return
+		}
+
 		access := r.GetString("access_level")
 		if access == "" {
 			r.JSON(http.StatusForbidden, gin.H{"error": "No access"})
@@ -39,7 +58,7 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 		client := &Client{
 			Conn:       conn,
 			Send:       make(chan []byte, 256),
-			UserID:     user_id,
+			UserID:     claims.UserID,
 			DocumentID: doc_id,
 			Username:   username,
 			Hub:        hub,

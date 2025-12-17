@@ -51,8 +51,6 @@ func RegisterRoutes(r *gin.Engine) {
 	go hub.Run()
 
 	wsGroup := r.Group("/ws")
-	wsGroup.Use(utils.Auth())
-	wsGroup.Use(utils.DocumentAccess())
 	{
 		wsGroup.GET("/document/:id", ws.DocumentWebSocket(hub))
 	}

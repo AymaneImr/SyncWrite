@@ -1,6 +1,10 @@
 package ws
 
-import "github.com/gorilla/websocket"
+import (
+	"encoding/json"
+
+	"github.com/gorilla/websocket"
+)
 
 func (c *Client) ReadPump() {
 	defer func() {
@@ -14,10 +18,16 @@ func (c *Client) ReadPump() {
 			break
 		}
 
-		c.Hub.Broadcast <- Message{
-			DocumentID: c.DocumentID,
-			Data:       msg,
+		var WSMessage WsData
+		if err := json.Unmarshal(msg, &WSMessage); err != nil {
+			break
 		}
+
+		WSMessage.UserID = c.UserID
+		WSMessage.Username = c.Username
+		WSMessage.DocumentID = c.DocumentID
+
+		c.Hub.Broadcast <- WSMessage
 	}
 }
 

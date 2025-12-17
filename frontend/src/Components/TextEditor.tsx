@@ -104,7 +104,8 @@ export default function TextEditor() {
   useEffect(() => {
     //if (!document_id) return;
 
-    const ws = new WebSocket(`ws://localhost:8080/ws/document/${document_id}`);
+    const token = localStorage.getItem("access_token");
+    const ws = new WebSocket(`ws://localhost:8080/ws/document/${document_id}?token=${token}`);
 
     socketRef.current = ws
 
