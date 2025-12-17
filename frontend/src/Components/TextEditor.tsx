@@ -1,254 +1,97 @@
-import React from "react";
+import React, { useRef } from "react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyleKit } from "@tiptap/extension-text-style";
-import type { Editor } from "@tiptap/react";
 import styles from "../css/TextEditor.module.css";
 import { useEffect, useState } from "react";
-import {
-  Bold,
-  Italic,
-  Strikethrough,
-  Code,
-  Type,
-  List,
-  ListOrdered,
-  Quote,
-  Undo,
-  Redo,
-  Minus,
-  Trash2,
-  Save,
-  Share2
-} from "lucide-react";
 import OnlineEditors from "./OnlineEditors";
-import ShareDialog from "./ShareButton";
+import MenuBar from "./MenuBar";
+import { useParams } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
 
 const extensions = [TextStyleKit, StarterKit.configure({
   bulletList: false,
   orderedList: false,
   listItem: false,
-}), TextAlign.configure({ types: ['heading', 'paragraph'] }), Highlight.configure({ multicolor: true }), BulletList, OrderedList, ListItem];
+}), TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  Highlight.configure({ multicolor: true }),
+  BulletList,
+  OrderedList,
+  ListItem
+];
 
-function MenuBar({ editor }: { editor: Editor | null }) {
+export interface DecodedToken {
+  user_id: number;
+  username: string;
+  exp: number;
+}
 
-  if (!editor) return null;
+function getCurrentUser(): DecodedToken | null {
+  const token = localStorage.getItem("access_token");
+  if (!token) return null;
 
-  const state = useEditorState({
-    editor,
-    selector: (ctx) => ({
-      isBold: ctx.editor.isActive("bold") ?? false,
-      canBold: ctx.editor.can().chain().toggleBold().run() ?? false,
-      isItalic: ctx.editor.isActive("italic") ?? false,
-      canItalic: ctx.editor.can().chain().toggleItalic().run() ?? false,
-      isStrike: ctx.editor.isActive("strike") ?? false,
-      canStrike: ctx.editor.can().chain().toggleStrike().run() ?? false,
-      isCode: ctx.editor.isActive("code") ?? false,
-      canCode: ctx.editor.can().chain().toggleCode().run() ?? false,
-      isBulletList: ctx.editor.isActive("bulletList") ?? false,
-      isOrderedList: ctx.editor.isActive("orderedList") ?? false,
-      isBlockquote: ctx.editor.isActive("blockquote") ?? false,
-      isCodeBlock: ctx.editor.isActive("codeBlock") ?? false,
-      canUndo: ctx.editor.can().chain().undo().run() ?? false,
-      canRedo: ctx.editor.can().chain().redo().run() ?? false,
-    }),
-  });
-
-  const handleSave = () => {
-    const content = editor.getHTML();
-    localStorage.setItem("document-content", content);
-    alert("Document saved locally 💾");
-  };
-
-  return (
-    <div className={styles.toolbar}>
-
-      <div className={styles.group}>
-        <button
-          className={styles.button}
-          disabled={!state.canUndo}
-          onClick={() => editor.chain().focus().undo().run()}
-          title="Undo"
-        >
-          <Undo size={18} />
-        </button>
-        <button
-          className={styles.button}
-          disabled={!state.canRedo}
-          onClick={() => editor.chain().focus().redo().run()}
-          title="Redo"
-        >
-          <Redo size={18} />
-        </button>
-      </div>
-      <div className={styles.group}>
-        <button
-          className={`${styles.button} ${state.isBold ? styles.active : ""}`}
-          disabled={!state.canBold}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Bold"
-        >
-          <Bold size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isItalic ? styles.active : ""}`}
-          disabled={!state.canItalic}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Italic"
-        >
-          <Italic size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isStrike ? styles.active : ""}`}
-          disabled={!state.canStrike}
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          title="Strike"
-        >
-          <Strikethrough size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isCode ? styles.active : ""}`}
-          disabled={!state.canCode}
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          title="Inline code"
-        >
-          <Code size={18} />
-        </button>
-      </div>
-
-      <div className={styles.group}>
-        <button
-          className={`${styles.button} ${state.isBulletList ? styles.active : ""}`}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Bullet list"
-        >
-          <List size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isOrderedList ? styles.active : ""}`}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          title="Ordered list"
-        >
-          <ListOrdered size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isBlockquote ? styles.active : ""}`}
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          title="Blockquote"
-        >
-          <Quote size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isCodeBlock ? styles.active : ""}`}
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          title="Code block"
-        >
-          <Type size={18} />
-        </button>
-      </div>
-
-      <div className={styles.group}>
-        <button
-          className={styles.button}
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          title="Align left"
-        >
-          L
-        </button>
-        <button
-          className={styles.button}
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          title="Align center"
-        >
-          C
-        </button>
-        <button
-          className={styles.button}
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          title="Align right"
-        >
-          R
-        </button>
-
-
-        {/* TODO: implement better option styles later */}
-
-        <div className={styles.group}>
-          <select
-            className={styles.select}
-            onChange={(e) =>
-              editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
-            }
-            title="Highlight color"
-          >
-            <option value="yellow">Yellow</option>
-            <option value="lightgreen">Green</option>
-            <option value="pink">Pink</option>
-            <option value="cyan">Cyan</option>
-          </select>
-        </div>
-
-
-        <select
-          className={styles.select}
-          onChange={(e) => editor.chain().focus().setMark('textStyle', { fontSize: e.target.value }).run()}
-        >
-          <option value="12px">12</option>
-          <option value="14px">14</option>
-          <option value="16px">16</option>
-          <option value="18px">18</option>
-          <option value="24px">24</option>
-        </select>
-      </div>
-
-      <div className={styles.group}>
-        <button
-          className={styles.button}
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          title="Horizontal line"
-        >
-          <Minus size={18} />
-        </button>
-        <button
-          className={styles.button}
-          onClick={() => editor.chain().focus().unsetAllMarks().run()}
-          title="Clear formatting"
-        >
-          <Trash2 size={18} />
-        </button>
-      </div>
-      <div className={styles.group}>
-        <button
-          className={styles.button}
-          onClick={handleSave}
-          title="Save document"
-        >
-          <Save size={18} />
-        </button>
-
-        <div className={styles.button}>
-          <ShareDialog />
-        </div>
-      </div>
-
-
-    </div>
-  );
+  try {
+    return jwtDecode<DecodedToken>(token);
+  } catch {
+    return null;
+  }
 }
 
 export default function TextEditor() {
-  const [users, setUsers] = useState([]);
+  const [onlineColabs, setOnlineColabs] = useState([]);
+
+  // get the document_id from the url
+  const { id: document_id } = useParams();
+
+  // get the current user 
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    //return <div>Loading...</div>;
+  }
+
+  const lastCursorSentRef = useRef<number>(0);
+  const CURSOR_THROTTLE_MS = 80;
+
+  const [remoteCursors, setRemoteCursors] = useState<
+    Record<number, { position: number; username: string }>
+  >({});
 
   useEffect(() => {
-    fetch("http://localhost:3000/online-users")
+    if (!socketRef.current) return;
+
+    socketRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.event === "cursor") {
+
+        // ignore user's cursor
+        if (data.user_id === currentUser?.user_id) return;
+
+        setRemoteCursors(prev => ({
+          ...prev,
+          [data.user_id]: {
+            position: data.position,
+            username: data.username,
+          }
+        }));
+      }
+    };
+  }, [currentUser?.user_id]);
+
+
+
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/documents/${document_id}/collaborators`)
       .then(res => res.json())
-      .then(data => setUsers(data));
+      .then(data => setOnlineColabs(data));
   }, []);
+
   const mockUsers = [
     { id: "u1", name: "Aymane", color: "#4f46e5" },
     { id: "u2", name: "Sarah", color: "green" },
@@ -256,10 +99,96 @@ export default function TextEditor() {
     { id: "u4", name: "Maya", color: "yellow" }
   ];
 
+  const socketRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    //if (!document_id) return;
+
+    const ws = new WebSocket(`ws://localhost:8080/ws/document/${document_id}`);
+
+    socketRef.current = ws
+
+    return () => {
+      ws.close();
+    };
+  }, [document_id]
+  );
+
   const editor = useEditor({
     extensions,
     content: ``,
   });
+
+  useEffect(() => {
+    if (!editor || !socketRef.current) return
+
+    const handleSelectionUpdate = ({ editor }: any) => {
+
+      const now = Date.now();
+      if (now - lastCursorSentRef.current < CURSOR_THROTTLE_MS) {
+        return;
+      }
+
+      lastCursorSentRef.current = now;
+
+      const cursor_position = editor.state.selection.from
+
+      socketRef.current?.send(
+        JSON.stringify({
+          event: "cursor",
+          user_id: currentUser?.user_id,
+          username: currentUser?.username,
+          position: cursor_position
+        }))
+    }
+
+    editor.on("selectionUpdate", handleSelectionUpdate)
+
+    return () => {
+      editor.off("selectionUpdate", handleSelectionUpdate)
+    }
+  }, [editor, currentUser]
+  )
+
+  function RemoteCursors({ cursors }: { cursors: any }) {
+    return (
+      <>
+        {Object.entries(cursors).map(([userId, cursor]: any) => (
+          <div
+            key={userId}
+            style={{
+              position: "absolute",
+              left: `${cursor.position % 500}px`, // TEMP positioning
+              top: `${Math.floor(cursor.position / 500) * 20}px`,
+              pointerEvents: "none",
+              zIndex: 20,
+            }}
+          >
+            <div
+              style={{
+                width: "2px",
+                height: "20px",
+                background: "#4f46e5",
+              }}
+            />
+            <div
+              style={{
+                fontSize: "10px",
+                background: "#4f46e5",
+                color: "#fff",
+                padding: "2px 4px",
+                borderRadius: "4px",
+                marginTop: "2px",
+              }}
+            >
+              {cursor.username}
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  }
+
 
   return (
 
@@ -270,11 +199,12 @@ export default function TextEditor() {
 
       <div className={styles.contentWrapper}>
 
-        <div className={styles.editorScrollContainer}>
+        <div className={styles.editorScrollContainer} style={{ position: "relative" }}>
           <EditorContent editor={editor} className={styles.editorContent} />
+          <RemoteCursors cursors={remoteCursors} />
         </div>
 
-        <OnlineEditors users={mockUsers} />
+        <OnlineEditors users={onlineColabs} />
       </div>
     </div>
   );
