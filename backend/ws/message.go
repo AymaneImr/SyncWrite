@@ -2,8 +2,9 @@ package ws
 
 type WsData struct {
 	// fields injected by frontend
-	Event    string `json:"event"`
-	Position int    `json:"position"`
+	Event string `json:"event"`
+	From  int    `json:"from"`
+	To    int    `json:"to"`
 
 	// fields injectecd by backend
 	UserID     uint   `json:"user_id"`

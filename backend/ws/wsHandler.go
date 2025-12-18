@@ -19,7 +19,6 @@ var upgrader = websocket.Upgrader{
 func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 	return func(r *gin.Context) {
 
-		user_id := r.GetUint("user_id")
 		username := r.GetString("username")
 
 		doc_idStr := r.Param("id")

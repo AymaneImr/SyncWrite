@@ -80,13 +80,13 @@ func Login(r *gin.Context) {
 		return
 	}
 
-	if user.Username == "" || user.Password == "" {
+	if user.Username == " " || user.Password == " " {
 		r.JSON(http.StatusNotFound, gin.H{"error": "Missing fields"})
 		return
 	}
 
 	var db_user models.User
-	result := db.Db.Where("Username = ? ", user.Username).First(&db_user)
+	result := db.Db.Where("Email = ? ", user.Email).First(&db_user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			r.JSON(http.StatusNotFound, gin.H{"error": "User with this this username doesn't exist"})
@@ -110,7 +110,7 @@ func Login(r *gin.Context) {
 
 	// create user session
 	session := models.UserSession{
-		UserID:       user.ID,
+		UserID:       db_user.ID,
 		Token:        access,
 		RefreshToken: refresh,
 		IpAddress:    r.ClientIP(),

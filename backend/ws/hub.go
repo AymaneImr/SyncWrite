@@ -3,6 +3,7 @@ package ws
 import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
+	"encoding/json"
 	"fmt"
 )
 
@@ -10,7 +11,7 @@ type Hub struct {
 	Rooms      map[uint]map[*Client]bool
 	Register   chan *Client
 	Unregister chan *Client
-	Broadcast  chan Message
+	Broadcast  chan WsData
 }
 
 func NewHub() *Hub {
@@ -18,7 +19,7 @@ func NewHub() *Hub {
 		Rooms:      make(map[uint]map[*Client]bool),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		Broadcast:  make(chan Message),
+		Broadcast:  make(chan WsData),
 	}
 }
 
@@ -81,8 +82,10 @@ func (h *Hub) Run() {
 			}
 
 		case msg := <-h.Broadcast:
+			payload, _ := json.Marshal(msg)
+
 			for client := range h.Rooms[msg.DocumentID] {
-				client.Send <- msg.Data
+				client.Send <- payload
 			}
 		}
 	}
