@@ -19,8 +19,9 @@ func CreateDocument(r *gin.Context) {
 		Title string `json:"title"`
 	}
 
-	if err := r.BindJSON(body); err != nil {
+	if err := r.BindJSON(&body); err != nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
 	}
 
 	if body.Title == " " {
@@ -52,7 +53,7 @@ func LoadDocuments(r *gin.Context) {
 	user_id := r.GetUint("user_id")
 
 	var docs []models.Document
-	err := db.Db.Where("owner_id = ?", user_id).Order("updated_at DESC").Find(docs).Error
+	err := db.Db.Where("owner_id = ?", user_id).Order("updated_at DESC").Find(&docs).Error
 
 	if err != nil {
 		r.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch documents"})
@@ -138,6 +139,11 @@ func UpdateContent(r *gin.Context) {
 
 	if err := r.BindJSON(&body); err != nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
+		return
+	}
+
+	if body.Content == "" {
+		r.JSON(http.StatusOK, gin.H{"message": "document content is cleared"})
 		return
 	}
 

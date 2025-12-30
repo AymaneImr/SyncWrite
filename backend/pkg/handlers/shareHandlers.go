@@ -171,10 +171,7 @@ func DeleteColabborator(r *gin.Context) {
 
 func OpenByLink(r *gin.Context) {
 	link := r.Param("link")
-	user_idStr := r.GetString("user_id")
-
-	userID64, _ := strconv.ParseUint(user_idStr, 10, 64)
-	user_id := uint(userID64)
+	user_id := r.GetUint("user_id")
 
 	var doc models.Document
 	if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {

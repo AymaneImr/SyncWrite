@@ -2,12 +2,9 @@ package models
 
 import (
 	"encoding/json"
-
-	"gorm.io/gorm"
 )
 
 type Document struct {
-	gorm.Model
 	ID           uint   `gorm:"primaryKey; not null; unique; autoIncrement" json:"id"`
 	OwnerID      uint   `gorm:"not null; index" json:"owner_id"`
 	Title        string `gorm:"type:text; size:20; default:untitled" json:"title"`
@@ -20,11 +17,10 @@ type Document struct {
 	Session       []DocumentSession      `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 	Collaborators []DocumentCollaborator `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 	DocumentEvent []DocumentEvent        `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
-	Operations    []Operation            `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
+	//Operations    []Operation            `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 }
 
 type DocumentSession struct {
-	gorm.Model
 	ID            uint   `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
 	DocumentID    uint   `gorm:"not null; index" json:"document_id"`
 	Token         string `gorm:"type:text; not null; unique" json:"token"`
@@ -42,7 +38,6 @@ const (
 )
 
 type DocumentCollaborator struct {
-	gorm.Model
 	ID         uint   `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
 	DocumentID uint   `gorm:"not null; index" json:"document_id"`
 	UserID     uint   `gorm:"not null; index" json:"user_id"`
@@ -60,7 +55,6 @@ const (
 )
 
 type DocumentEvent struct {
-	gorm.Model
 	ID         uint            `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
 	DocumentID uint            `gorm:"not null; index" json:"document_id"`
 	UserID     uint            `gorm:"not null; index" json:"user_id"`
@@ -76,7 +70,6 @@ const (
 )
 
 type Operation struct {
-	gorm.Model
 	UserID        uint   `gorm:"not null; index" json:"user_id"`
 	DocumentID    uint   `gorm:"not null; index" json:"document_id"`
 	OperationType string `gorm:"not null" json:"operation_type"`

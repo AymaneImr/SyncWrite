@@ -50,7 +50,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		var user models.User
-		if err = db.Db.First(user, claims.UserID).Error; err != nil {
+		if err = db.Db.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			c.Abort()
 			return

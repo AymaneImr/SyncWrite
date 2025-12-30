@@ -1,9 +1,6 @@
 package models
 
-import "gorm.io/gorm"
-
 type User struct {
-	gorm.Model
 	ID       uint   `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
 	Username string `gorm:"type:text; size:15; not null" json:"username"`
 	Email    string `gorm:"type:text; size:40; not null; unique" json:"email"`
@@ -15,12 +12,11 @@ type User struct {
 	Documents            []Document             `gorm:"foreignKey:OwnerID; constraint:OnDelete:CASCADE"`
 	DocumentSessions     []DocumentSession      `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE"`
 	DocumentCollaborator []DocumentCollaborator `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE"`
-	DocumentEvents       []DocumentEvent        `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
-	Operations           []Operation            `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
+	DocumentEvents       []DocumentEvent        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	//Operations           []Operation            `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 type UserSession struct {
-	gorm.Model
 	ID           uint   `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
 	UserID       uint   `gorm:"not null; index" json:"user_id"`
 	UserAgent    string `gorm:"type:text" json:"user_agent"`
