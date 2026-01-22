@@ -47,7 +47,7 @@ func InviteUser(r *gin.Context) {
 	}
 
 	var invitedUserIsCollaborator models.DocumentCollaborator
-	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, invitedUser.ID).First(&invitedUserIsCollaborator).Error; err != nil {
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, invitedUser.ID).First(&invitedUserIsCollaborator).Error; err == nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "User already a collaborator"})
 		return
 	}
@@ -68,6 +68,16 @@ func InviteUser(r *gin.Context) {
 	r.JSON(http.StatusOK, gin.H{"message": "Collaborator invited"})
 }
 
+type CollaboratorDTO struct {
+	UserID     uint   `json:"user_id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	Permission string `json:"permission"`
+	InvitedBy  uint   `json:"invited_by"`
+	InvitedAt  int64  `json:"invited_at"`
+	JoinedAt   int64  `json:"joined_at"`
+}
+
 func GetCollaborators(r *gin.Context) {
 	doc_idStr := r.Param("id")
 	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
@@ -81,8 +91,19 @@ func GetCollaborators(r *gin.Context) {
 		return
 	}
 
-	var collaborators []models.DocumentCollaborator
-	db.Db.Where("document_id = ?", doc_id).Find(&collaborators)
+	collaborators := make([]CollaboratorDTO, 0)
+	if err := db.Db.Table("document_collaborators dc").
+		Select(`
+			dc.user_id, u.username,
+			dc.permission, dc.invited_by, dc.invited_at, dc.joined_at
+		`).
+		Joins("JOIN users u ON u.id = dc.user_id").
+		Where("dc.document_id = ?", doc_id).
+		Scan(&collaborators).Error; err != nil {
+
+		r.JSON(500, gin.H{"error": "failed to load collaborators"})
+		return
+	}
 
 	r.JSON(http.StatusOK, gin.H{"collaborators": collaborators})
 }

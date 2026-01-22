@@ -31,8 +31,6 @@ func Auth() gin.HandlerFunc {
 		}
 
 		tokenStr := parts[1]
-		fmt.Println(tokenStr)
-		fmt.Println(config.Env.JWT_SECRET)
 
 		claims, err := ParseToken(tokenStr, config.Env.JWT_SECRET)
 		if err != nil {

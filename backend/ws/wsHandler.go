@@ -3,6 +3,7 @@ package ws
 import (
 	"document_editor/pkg/config"
 	"document_editor/pkg/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -42,15 +43,19 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			return
 		}
 
-		access := r.GetString("access_level")
-		if access == "" {
-			r.JSON(http.StatusForbidden, gin.H{"error": "No access"})
-			return
-		}
+		/*
+			access := r.GetString("access_level")
+			fmt.Println(access)
+			if access == "" {
+				r.JSON(http.StatusForbidden, gin.H{"error": "No access"})
+				fmt.Println("no access")
+				return
+			}*/
 
 		conn, err := upgrader.Upgrade(r.Writer, r.Request, nil)
 		if err != nil {
 			r.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't upgrade to websocket"})
+			fmt.Println("couldn't upgrade")
 			return
 		}
 

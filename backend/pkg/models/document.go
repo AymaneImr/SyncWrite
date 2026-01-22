@@ -14,9 +14,9 @@ type Document struct {
 	LastEditedBy string `gorm:"type:text;" json:"last_edited_by"`
 	UpdatedAt    int64  `gorm:"type:int8;" json:"updated_at"`
 
-	Session       []DocumentSession      `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
-	Collaborators []DocumentCollaborator `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
-	DocumentEvent []DocumentEvent        `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
+	Session        []DocumentSession      `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
+	Collaborators  []DocumentCollaborator `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
+	DocumentEvents []DocumentEvent        `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 	//Operations    []Operation            `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 }
 
