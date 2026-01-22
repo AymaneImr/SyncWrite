@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, Github, Chrome } from "lucide-react";
 import ForgotPassword from "./ForgotPassword";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,6 +13,8 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const clearFields = () => {
     setUsername("");
@@ -35,7 +38,7 @@ const LoginForm: React.FC = () => {
       return;
     }
 
-    const endpoint = isLogin ? "/login" : "/register";
+    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     const body = isLogin
       ? { email, password }
       : { username, email, password, confirmPassword };
@@ -51,6 +54,12 @@ const LoginForm: React.FC = () => {
 
       if (res.ok) {
         setMessage(data.message || "Success!");
+        localStorage.setItem("refresh_token", data.refresh_token);
+        localStorage.setItem("access_token", data.access_token);
+        console.log(data.access_token);
+
+        navigate("/landing-page");
+
       } else {
         setMessage(data.error || "Invalid credentials or form data.");
       }

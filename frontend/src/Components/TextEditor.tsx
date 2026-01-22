@@ -13,6 +13,7 @@ import OnlineEditors from "./OnlineEditors";
 import MenuBar from "./MenuBar";
 import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import type { DocumentItem } from "./ExistingDocuments";
 
 
 const extensions = [TextStyleKit, StarterKit.configure({
@@ -45,22 +46,62 @@ function getCurrentUser(): DecodedToken | null {
 
 export default function TextEditor() {
   const [onlineColabs, setOnlineColabs] = useState([]);
-
-  // get the document_id from the url
-  const { id: document_id } = useParams();
-
-  // get the current user 
-  const currentUser = getCurrentUser();
-  if (!currentUser) {
-    //return <div>Loading...</div>;
-  }
+  const [doc, setDoc] = useState<DocumentItem | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const lastCursorSentRef = useRef<number>(0);
   const CURSOR_THROTTLE_MS = 80;
 
-  const [remoteCursors, setRemoteCursors] = useState<
-    Record<number, { position: number; username: string }>
+  const [remoteSelections, setRemoteSelections] = useState<
+    Record<number, { from: number; to: number; username: string }>
   >({});
+
+  const socketRef = useRef<WebSocket | null>(null);
+
+  // get the document_id from the url
+  const { id: doc_id } = useParams();
+
+  useEffect(() => {
+    const acc_token = localStorage.getItem("access_token") ?? null;
+    setToken(acc_token)
+
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const load = async () => {
+
+      const res = await fetch(`http://localhost:8080/api/documents/${doc_id}/load`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      setDoc(data.document)
+    }
+
+    load()
+  }, [token, doc_id]);
+
+  // get the current user 
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
+
+  useEffect(() => {
+    if (!doc_id || !token) return;
+
+    const ws = new WebSocket(`ws://localhost:8080/ws/document/${doc_id}?token=${encodeURIComponent(token)}`);
+
+    socketRef.current = ws
+
+    return () => {
+      ws.close();
+    };
+  }, [doc_id, token]);
 
   useEffect(() => {
     if (!socketRef.current) return;
@@ -68,15 +109,16 @@ export default function TextEditor() {
     socketRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      if (data.event === "cursor") {
+      if (data.event === "selection") {
 
         // ignore user's cursor
         if (data.user_id === currentUser?.user_id) return;
 
-        setRemoteCursors(prev => ({
+        setRemoteSelections(prev => ({
           ...prev,
           [data.user_id]: {
-            position: data.position,
+            from: data.from,
+            to: data.to,
             username: data.username,
           }
         }));
@@ -84,41 +126,30 @@ export default function TextEditor() {
     };
   }, [currentUser?.user_id]);
 
-
-
   useEffect(() => {
-    fetch(`http://localhost:8080/api/documents/${document_id}/collaborators`)
+    if (!doc_id || !token) return;
+
+    fetch(`http://localhost:8080/api/documents/${doc_id}/collaborators`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      }
+    })
       .then(res => res.json())
-      .then(data => setOnlineColabs(data));
-  }, []);
+      .then(data => setOnlineColabs(data.collaborators));
+  }, [doc_id, token]);
 
-  const mockUsers = [
-    { id: "u1", name: "Aymane", color: "#4f46e5" },
-    { id: "u2", name: "Sarah", color: "green" },
-    { id: "u3", name: "Leo", color: "#f59e0b" },
-    { id: "u4", name: "Maya", color: "yellow" }
-  ];
-
-  const socketRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    //if (!document_id) return;
-
-    const token = localStorage.getItem("access_token");
-    const ws = new WebSocket(`ws://localhost:8080/ws/document/${document_id}?token=${token}`);
-
-    socketRef.current = ws
-
-    return () => {
-      ws.close();
-    };
-  }, [document_id]
-  );
 
   const editor = useEditor({
     extensions,
-    content: ``,
+    content: doc?.Content,
   });
+
+  useEffect(() => {
+    if (!editor || !doc?.Content) return;
+    editor.commands.setContent(doc.Content);
+
+  }, [editor, doc?.Content]);
 
   useEffect(() => {
     if (!editor || !socketRef.current) return
@@ -132,14 +163,15 @@ export default function TextEditor() {
 
       lastCursorSentRef.current = now;
 
-      const cursor_position = editor.state.selection.from
+      const { from, to } = editor.state.selection;
 
       socketRef.current?.send(
         JSON.stringify({
           event: "cursor",
           user_id: currentUser?.user_id,
           username: currentUser?.username,
-          position: cursor_position
+          from,
+          to
         }))
     }
 
@@ -151,45 +183,62 @@ export default function TextEditor() {
   }, [editor, currentUser]
   )
 
-  function RemoteCursors({ cursors }: { cursors: any }) {
+  function RemoteSelections({ selections }: { selections: any }) {
     return (
       <>
-        {Object.entries(cursors).map(([userId, cursor]: any) => (
-          <div
-            key={userId}
-            style={{
-              position: "absolute",
-              left: `${cursor.position % 500}px`, // TEMP positioning
-              top: `${Math.floor(cursor.position / 500) * 20}px`,
-              pointerEvents: "none",
-              zIndex: 20,
-            }}
-          >
+        {Object.entries(selections).map(([userId, sel]: any) => {
+          const isCursor = sel.from === sel.to;
+
+          return (
             <div
+              key={userId}
               style={{
-                width: "2px",
-                height: "20px",
-                background: "#4f46e5",
-              }}
-            />
-            <div
-              style={{
-                fontSize: "10px",
-                background: "#4f46e5",
-                color: "#fff",
-                padding: "2px 4px",
-                borderRadius: "4px",
-                marginTop: "2px",
+                position: "absolute",
+                left: `${sel.from % 500}px`,
+                top: `${Math.floor(sel.from / 500) * 20}px`,
+                pointerEvents: "none",
+                zIndex: 20,
               }}
             >
-              {cursor.username}
+              {isCursor && (
+                <div
+                  style={{
+                    width: "2px",
+                    height: "20px",
+                    background: "#4f46e5",
+                  }}
+                />
+              )}
+
+              {!isCursor && (
+                <div
+                  style={{
+                    width: Math.min(200, (sel.to - sel.from) * 2),
+                    height: "20px",
+                    background: "rgba(99,102,241,0.25)",
+                    borderRadius: "4px",
+                  }}
+                />
+              )}
+
+              <div
+                style={{
+                  fontSize: "10px",
+                  background: "#4f46e5",
+                  color: "#fff",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                  marginTop: "2px",
+                }}
+              >
+                {sel.username}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </>
     );
   }
-
 
   return (
 
@@ -202,7 +251,7 @@ export default function TextEditor() {
 
         <div className={styles.editorScrollContainer} style={{ position: "relative" }}>
           <EditorContent editor={editor} className={styles.editorContent} />
-          <RemoteCursors cursors={remoteCursors} />
+          <RemoteSelections selections={remoteSelections} />
         </div>
 
         <OnlineEditors users={onlineColabs} />
