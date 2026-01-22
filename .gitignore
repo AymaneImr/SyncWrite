@@ -2,3 +2,6 @@ backend/.env
 
 backend/.project
 frontend/.project
+
+backend/tmp
+backend/web
