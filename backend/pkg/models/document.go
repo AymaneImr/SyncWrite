@@ -5,14 +5,14 @@ import (
 )
 
 type Document struct {
-	ID           uint   `gorm:"primaryKey; not null; unique; autoIncrement" json:"id"`
-	OwnerID      uint   `gorm:"not null; index" json:"owner_id"`
-	Title        string `gorm:"type:text; size:20; default:untitled" json:"title"`
-	Content      string `gorm:"type:text" json:"Content"`
-	Link         string `gorm:"type:text; not null; unique" json:"link"`
-	CreatedAt    int64  `gorm:"autoCreateTime:milli; not null" json:"created_at"`
-	LastEditedBy string `gorm:"type:text;" json:"last_edited_by"`
-	UpdatedAt    int64  `gorm:"type:int8;" json:"updated_at"`
+	ID           uint            `gorm:"primaryKey; not null; unique; autoIncrement" json:"id"`
+	OwnerID      uint            `gorm:"not null; index" json:"owner_id"`
+	Title        string          `gorm:"type:text; size:20; default:untitled" json:"title"`
+	Content      json.RawMessage `gorm:"type:jsonb" json:"Content"`
+	Link         string          `gorm:"type:text; not null; unique" json:"link"`
+	CreatedAt    int64           `gorm:"autoCreateTime:milli; not null" json:"created_at"`
+	LastEditedBy string          `gorm:"type:text;" json:"last_edited_by"`
+	UpdatedAt    int64           `gorm:"type:int8;" json:"updated_at"`
 
 	Session        []DocumentSession      `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`
 	Collaborators  []DocumentCollaborator `gorm:"foreignKey:DocumentID;constraint:OnDelete:CASCADE"`

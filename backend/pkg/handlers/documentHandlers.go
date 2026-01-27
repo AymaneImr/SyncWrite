@@ -4,6 +4,7 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
+	"encoding/json"
 
 	"net/http"
 	"strconv"
@@ -33,7 +34,7 @@ func CreateDocument(r *gin.Context) {
 	document := models.Document{
 		OwnerID:   user_id,
 		Title:     body.Title,
-		Content:   "",
+		Content:   nil,
 		Link:      link,
 		CreatedAt: time.Now().Unix(),
 	}
@@ -134,7 +135,7 @@ func UpdateContent(r *gin.Context) {
 	}
 
 	var body struct {
-		Content string `json:"content"`
+		Content json.RawMessage `json:"content"`
 	}
 
 	if err := r.BindJSON(&body); err != nil {
@@ -142,10 +143,12 @@ func UpdateContent(r *gin.Context) {
 		return
 	}
 
-	if body.Content == "" {
-		r.JSON(http.StatusOK, gin.H{"message": "document content is cleared"})
-		return
-	}
+	/*
+		if body.Content == "" {
+			r.JSON(http.StatusOK, gin.H{"message": "document content is cleared"})
+			return
+		}
+	*/
 
 	var doc models.Document
 	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
