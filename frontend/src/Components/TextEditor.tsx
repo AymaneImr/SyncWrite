@@ -48,6 +48,7 @@ export default function TextEditor() {
   const [onlineColabs, setOnlineColabs] = useState([]);
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [content, setContent] = useState<any>(null)
 
   const lastCursorSentRef = useRef<number>(0);
   const CURSOR_THROTTLE_MS = 80;
@@ -139,10 +140,12 @@ export default function TextEditor() {
       .then(data => setOnlineColabs(data.collaborators));
   }, [doc_id, token]);
 
-
   const editor = useEditor({
     extensions,
     content: doc?.Content,
+    onUpdate: ({ editor }) => {
+      setContent(editor.getJSON())
+    },
   });
 
   useEffect(() => {
@@ -182,6 +185,7 @@ export default function TextEditor() {
     }
   }, [editor, currentUser]
   )
+
 
   function RemoteSelections({ selections }: { selections: any }) {
     return (
@@ -244,7 +248,7 @@ export default function TextEditor() {
 
     <div className={styles.pageWrapper}>
       <div className={styles.menuBarWrapper}>
-        <MenuBar editor={editor} />
+        <MenuBar editor={editor} id={doc_id} token={token} />
       </div>
 
       <div className={styles.contentWrapper}>

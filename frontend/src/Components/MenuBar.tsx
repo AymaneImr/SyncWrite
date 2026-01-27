@@ -18,7 +18,7 @@ import {
   Save,
 } from "lucide-react";
 
-export default function MenuBar({ editor }: { editor: Editor | null }) {
+export default function MenuBar({ editor, id, token }: { editor: Editor | null, id?: string, token: string | null }) {
 
   if (!editor) return null;
 
@@ -43,9 +43,26 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
   });
 
   const handleSave = () => {
-    const content = editor.getHTML();
-    localStorage.setItem("document-content", content);
-    alert("Document saved locally 💾");
+    const content_js = editor.getJSON();
+    const saveContent = async () => {
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/updateContent`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: content_js
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.log(err);
+      }
+    }
+
+    saveContent()
   };
 
   return (
