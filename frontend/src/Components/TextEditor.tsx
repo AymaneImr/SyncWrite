@@ -49,6 +49,7 @@ export default function TextEditor() {
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [content, setContent] = useState<any>(null)
+  const [link, setLink] = useState("")
 
   const lastCursorSentRef = useRef<number>(0);
   const CURSOR_THROTTLE_MS = 80;
@@ -64,9 +65,16 @@ export default function TextEditor() {
 
   useEffect(() => {
     const acc_token = localStorage.getItem("access_token") ?? null;
-    setToken(acc_token)
+    setToken(acc_token);
 
   }, []);
+
+  useEffect(() => {
+    if (!doc?.link) return;
+    setLink(doc.link)
+
+  }, [doc?.link])
+
 
   useEffect(() => {
     if (!token) return;
@@ -248,7 +256,7 @@ export default function TextEditor() {
 
     <div className={styles.pageWrapper}>
       <div className={styles.menuBarWrapper}>
-        <MenuBar editor={editor} id={doc_id} token={token} />
+        <MenuBar editor={editor} id={doc_id} token={token} link={link} />
       </div>
 
       <div className={styles.contentWrapper}>

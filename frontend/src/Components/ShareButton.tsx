@@ -11,7 +11,7 @@ import { Share2, Copy } from "lucide-react";
 import styles from "../css/ShareButton.module.css";
 import { useState } from "react";
 
-export default function ShareDialog() {
+export default function ShareDialog({ id, token, link }: { id?: string, token: string | null, link: string }) {
   const [emailInput, setEmailInput] = useState("");
   const [roleInput, setRoleInput] = useState<"Viewer" | "Editor">("Viewer");
 
@@ -20,8 +20,6 @@ export default function ShareDialog() {
     { id: "1", email: "sarah@example.com", role: "Editor" },
     { id: "2", email: "mike@example.com", role: "Viewer" },
   ]);
-
-  const shareLink = "https://docs.example.com/xxxx";
 
   const addUser = () => {
     if (!emailInput.trim()) return;
@@ -37,6 +35,35 @@ export default function ShareDialog() {
 
     setEmailInput("");
   };
+
+  const handleInvite = () => {
+
+    const load = async () => {
+
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/invite`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailInput,
+          permission: roleInput
+        })
+      });
+
+      if (res.ok) {
+        addUser()
+      }
+      if (!res.ok) {
+        const err = await res.text();
+        console.log("err: ", err);
+
+      }
+    }
+
+    load()
+  }
 
   return (
     <Dialog>
@@ -69,7 +96,7 @@ export default function ShareDialog() {
             <option value="Viewer">Viewer</option>
             <option value="Editor">Editor</option>
           </select>
-          <button className={styles.inviteButton} onClick={addUser}>
+          <button className={styles.inviteButton} onClick={handleInvite}>
             Invite
           </button>
         </div>
@@ -102,10 +129,10 @@ export default function ShareDialog() {
 
         <p className={styles.label}>Share link</p>
         <div className={styles.linkBox}>
-          <input readOnly value={shareLink} />
+          <input readOnly value={link} />
           <button
             className={styles.copyBtn}
-            onClick={() => navigator.clipboard.writeText(shareLink)}
+            onClick={() => navigator.clipboard.writeText(link)}
           >
             <Copy size={18} />
           </button>

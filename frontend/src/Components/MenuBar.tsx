@@ -18,7 +18,7 @@ import {
   Save,
 } from "lucide-react";
 
-export default function MenuBar({ editor, id, token }: { editor: Editor | null, id?: string, token: string | null }) {
+export default function MenuBar({ editor, id, token, link }: { editor: Editor | null, id?: string, token: string | null, link: string }) {
 
   if (!editor) return null;
 
@@ -58,7 +58,7 @@ export default function MenuBar({ editor, id, token }: { editor: Editor | null, 
 
       if (!res.ok) {
         const err = await res.text();
-        console.log(err);
+        console.log("err: ", err);
       }
     }
 
@@ -232,7 +232,7 @@ export default function MenuBar({ editor, id, token }: { editor: Editor | null, 
         </button>
 
         <div className={styles.button}>
-          <ShareDialog />
+          <ShareDialog id={id} token={token} link={link} />
         </div>
       </div>
 
