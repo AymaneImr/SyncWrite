@@ -13,7 +13,7 @@ import { useState } from "react";
 
 export default function ShareDialog({ id, token, link }: { id?: string, token: string | null, link: string }) {
   const [emailInput, setEmailInput] = useState("");
-  const [roleInput, setRoleInput] = useState<"Viewer" | "Editor">("Viewer");
+  const [roleInput, setRoleInput] = useState<"owner" | "read-only">("owner");
 
   const [users, setUsers] = useState([
     // just for development
@@ -93,8 +93,9 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
             value={roleInput}
             onChange={(e) => setRoleInput(e.target.value as any)}
           >
-            <option value="Viewer">Viewer</option>
-            <option value="Editor">Editor</option>
+            {/* FIX: fix permission mess later, keeping it now for testing*/}
+            <option value="read-write">Viewer</option>
+            <option value="owner">Editor</option>
           </select>
           <button className={styles.inviteButton} onClick={handleInvite}>
             Invite

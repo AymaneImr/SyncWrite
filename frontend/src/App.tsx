@@ -15,7 +15,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Auth />} />
           <Route path="/document-type" element={<ProtectedRoute> <DocsPage /> </ProtectedRoute>} />
-          <Route path="/editor/:id" element={<ProtectedRoute> <TextEditor /> </ProtectedRoute>} />
+          <Route path="/editor/:link" element={<ProtectedRoute> <TextEditor /> </ProtectedRoute>} />
           <Route path="/landing-page" element={<LandingPage />} />
         </Routes>
       </main>

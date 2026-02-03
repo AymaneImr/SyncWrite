@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Cards from '../Components/Card.tsx';
 import TextEditor from './TextEditor.tsx';
 import styles from '../css/Docs.module.css';
@@ -7,6 +7,8 @@ import text_right_icon from '../assets/file-cloud-svgrepo-com.svg'
 import table_right_icon from '../assets/table-alt-svgrepo-com.svg'
 import table_left_icon from '../assets/table-layout-svgrepo-com.svg'
 import ExistingDocuments from './ExistingDocuments.tsx';
+import OpenByLinkModal from './OpenByLinkModal.tsx';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function DocsPage() {
@@ -14,7 +16,7 @@ export default function DocsPage() {
   const [showExistingDocuments, setShowExistingDocuments] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedTable, setUploadedTable] = useState<File | null>(null);
-
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
   const handleTextUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -29,6 +31,7 @@ export default function DocsPage() {
       reader.readAsText(f);
     }
   };
+
   const handleTableUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     if (f) {
@@ -36,6 +39,32 @@ export default function DocsPage() {
       alert(`Table uploaded: ${f.name} (demo) - backend integration left to you`);
     }
   };
+
+  const token = localStorage.getItem("access_token");
+  const navigate = useNavigate();
+
+  const handleOpenByDoc = async (link: string) => {
+
+    if (!link || !token) return;
+    const load = async () => {
+      const res = await fetch(`http://localhost:8080/api/document/link/${link}/open`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.error(err);
+      }
+
+      navigate(`/editor/${link}`)
+    }
+
+    load()
+    setShowLinkModal(false)
+  }
 
   return (
     <div className={styles.pageWrap}>
@@ -55,7 +84,7 @@ export default function DocsPage() {
               onUpload={handleTextUpload}
               onCreate={() => setShowEditor(true)}
               onOpenExisting={() => setShowExistingDocuments(true)}
-
+              onOpenByLink={() => setShowLinkModal(true)}
               leftIcon={text_left_icon}
               rightIcon={text_right_icon}
             />
@@ -68,6 +97,7 @@ export default function DocsPage() {
               uploadAccept=".xlsx,.csv"
               onUpload={handleTableUpload}
               onCreate={undefined} // disabled
+              //onOpenByLink={() => setShowLinkModal(true)}
               leftIcon={table_left_icon}
               rightIcon={table_right_icon}
             />
@@ -92,6 +122,16 @@ export default function DocsPage() {
         <ExistingDocuments
           onBack={() => {
             setShowExistingDocuments(false);
+          }}
+        />
+      )}
+
+      {showLinkModal && (
+        <OpenByLinkModal
+          onClose={() => setShowLinkModal(false)}
+          onOpen={(link) => {
+
+            handleOpenByDoc(link)
           }}
         />
       )}

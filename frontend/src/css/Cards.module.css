@@ -79,6 +79,22 @@
   background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
+.openLinkBtn {
+  padding: 10px;
+  border-radius: 10px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.openLinkBtn:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
 .openBtn {
   padding: 12px;
   border-radius: 10px;

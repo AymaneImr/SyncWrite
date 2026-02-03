@@ -49,7 +49,7 @@ export default function TextEditor() {
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [content, setContent] = useState<any>(null)
-  const [link, setLink] = useState("")
+  const [id, setId] = useState("")
 
   const lastCursorSentRef = useRef<number>(0);
   const CURSOR_THROTTLE_MS = 80;
@@ -61,7 +61,7 @@ export default function TextEditor() {
   const socketRef = useRef<WebSocket | null>(null);
 
   // get the document_id from the url
-  const { id: doc_id } = useParams();
+  const { link: link } = useParams();
 
   useEffect(() => {
     const acc_token = localStorage.getItem("access_token") ?? null;
@@ -70,17 +70,16 @@ export default function TextEditor() {
   }, []);
 
   useEffect(() => {
-    if (!doc?.link) return;
-    setLink(doc.link)
+    if (!doc?.id) return;
+    setId(doc.id)
 
-  }, [doc?.link])
-
+  }, [doc?.id])
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !link) return;
     const load = async () => {
 
-      const res = await fetch(`http://localhost:8080/api/documents/${doc_id}/load`, {
+      const res = await fetch(`http://localhost:8080/api/documents/link/${link?.trim()}/load`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -91,7 +90,7 @@ export default function TextEditor() {
     }
 
     load()
-  }, [token, doc_id]);
+  }, [token, link]);
 
   // get the current user 
   const currentUser = getCurrentUser();
@@ -101,16 +100,16 @@ export default function TextEditor() {
   }
 
   useEffect(() => {
-    if (!doc_id || !token) return;
+    if (!id || !token) return;
 
-    const ws = new WebSocket(`ws://localhost:8080/ws/document/${doc_id}?token=${encodeURIComponent(token)}`);
+    const ws = new WebSocket(`ws://localhost:8080/ws/document/${id}?token=${encodeURIComponent(token)}`);
 
     socketRef.current = ws
 
     return () => {
       ws.close();
     };
-  }, [doc_id, token]);
+  }, [id, token]);
 
   useEffect(() => {
     if (!socketRef.current) return;
@@ -136,17 +135,29 @@ export default function TextEditor() {
   }, [currentUser?.user_id]);
 
   useEffect(() => {
-    if (!doc_id || !token) return;
+    if (!id || !token) return;
 
-    fetch(`http://localhost:8080/api/documents/${doc_id}/collaborators`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const load = async () => {
+
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/collaborators`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!res.ok) {
+        const err = await res.text()
+        console.log("errr: ", err);
+        return;
       }
-    })
-      .then(res => res.json())
-      .then(data => setOnlineColabs(data.collaborators));
-  }, [doc_id, token]);
+
+      const data = await res.json();
+      setOnlineColabs(data.collaborators)
+    }
+
+    load()
+  }, [id, token]);
 
   const editor = useEditor({
     extensions,
@@ -178,7 +189,7 @@ export default function TextEditor() {
 
       socketRef.current?.send(
         JSON.stringify({
-          event: "cursor",
+          event: "selection",
           user_id: currentUser?.user_id,
           username: currentUser?.username,
           from,
@@ -256,7 +267,7 @@ export default function TextEditor() {
 
     <div className={styles.pageWrapper}>
       <div className={styles.menuBarWrapper}>
-        <MenuBar editor={editor} id={doc_id} token={token} link={link} />
+        <MenuBar editor={editor} id={id} token={token} link={link} />
       </div>
 
       <div className={styles.contentWrapper}>

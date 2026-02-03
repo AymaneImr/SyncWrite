@@ -10,6 +10,7 @@ type CardProps = {
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCreate?: () => void;
   onOpenExisting?: () => void;
+  onOpenByLink?: () => void;
   uploadAccept?: string;
   leftIcon: React.ReactNode;
   rightIcon: React.ReactNode;
@@ -22,6 +23,7 @@ export default function Cards({
   onUpload,
   onCreate,
   onOpenExisting,
+  onOpenByLink,
   uploadAccept,
   leftIcon,
   rightIcon,
@@ -69,6 +71,13 @@ export default function Cards({
           disabled={!onOpenExisting}
         >
           Open Existing Document
+        </button>
+        <button
+          className={styles.openLinkBtn}
+          onClick={onOpenByLink}
+          disabled={!onOpenByLink}
+        >
+          Open by Link
         </button>
       </div>
 
