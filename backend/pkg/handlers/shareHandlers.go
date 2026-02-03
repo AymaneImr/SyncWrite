@@ -83,11 +83,11 @@ func GetCollaborators(r *gin.Context) {
 	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
 
 	doc_id := uint(docID64)
-	user_id := r.GetUint("user_id")
+	//user_id := r.GetUint("user_id")
 
 	var doc models.Document
-	if err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error; err != nil {
-		r.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+	if err := db.Db.Where("id = ?", doc_id).First(&doc).Error; err != nil {
+		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
 		return
 	}
 

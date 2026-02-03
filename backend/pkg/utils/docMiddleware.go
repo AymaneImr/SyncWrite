@@ -21,7 +21,12 @@ func DocumentAccess() gin.HandlerFunc {
 
 		// Check if user is the OWNER of the document
 		var doc models.Document
-		if err := db.Db.Where("id = ? AND owner_id = ?", docID, userID).First(&doc).Error; err == nil {
+		if err := db.Db.Where("id = ?", docID).First(&doc).Error; err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			return
+		}
+
+		if doc.OwnerID == userID {
 
 			// User IS the owner
 			r.Set("access_level", "owner")
@@ -33,6 +38,44 @@ func DocumentAccess() gin.HandlerFunc {
 		// Not owner → check collaborator table
 		var collaborator models.DocumentCollaborator
 		if err := db.Db.Where("document_id = ? AND user_id = ?", docID, userID).First(&collaborator).Error; err != nil {
+
+			// User is neither owner nor collaborator → reject
+			r.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this document"})
+			return
+		}
+
+		// 5. User is collaborator → set permission
+		r.Set("access_level", collaborator.Permission)
+		r.Set("document", doc)
+		r.Next()
+	}
+}
+
+// temp middlewar
+func DocumentAccessLink() gin.HandlerFunc {
+	return func(r *gin.Context) {
+
+		link := r.Param("link")
+		userID := r.GetUint("user_id")
+
+		// Check if user is the OWNER of the document
+		var doc models.Document
+		if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			return
+		}
+
+		if doc.ID == userID {
+			// User IS the owner
+			r.Set("access_level", "owner")
+			r.Set("document", doc)
+			r.Next()
+			return
+		}
+
+		// Not owner → check collaborator table
+		var collaborator models.DocumentCollaborator
+		if err := db.Db.Where("document_id = ? AND user_id = ?", doc.ID, userID).First(&collaborator).Error; err != nil {
 
 			// User is neither owner nor collaborator → reject
 			r.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this document"})

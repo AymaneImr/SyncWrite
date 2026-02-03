@@ -26,9 +26,11 @@ func GenerateSessionToken() string {
 func HasDocumentAccess(userID uint, docID uint) bool {
 
 	var doc models.Document
-	if err := db.Db.
-		Where("id = ? AND owner_id = ?", docID, userID).
-		First(&doc).Error; err == nil {
+	if err := db.Db.Where("id = ?", docID).First(&doc).Error; err != nil {
+		return false
+	}
+
+	if doc.OwnerID == userID {
 		return true
 	}
 

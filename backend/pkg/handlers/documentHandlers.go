@@ -5,6 +5,7 @@ import (
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
 	"encoding/json"
+	"fmt"
 
 	"net/http"
 	"strconv"
@@ -82,6 +83,21 @@ func LoadDocument(r *gin.Context) {
 	r.JSON(http.StatusOK, gin.H{"document": doc})
 }
 
+func LoadDocumentByLink(r *gin.Context) {
+	link := r.Param("link")
+	//user_id := r.GetUint("user_id")
+
+	var doc models.Document
+	err := db.Db.Where("link = ?", link).First(&doc).Error
+
+	if err != nil {
+		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	r.JSON(http.StatusOK, gin.H{"document": doc})
+}
+
 func UpdateTitle(r *gin.Context) {
 	doc_idStr := r.Param("id")
 	user_id := r.GetUint("user_id")
@@ -129,6 +145,8 @@ func UpdateContent(r *gin.Context) {
 	doc_id := uint(docID64)
 
 	access := r.GetString("access_level")
+	fmt.Println(access)
+	fmt.Println("access ", utils.CanEdit(access))
 	if !utils.CanEdit(access) {
 		r.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to edit this document"})
 		return
@@ -151,7 +169,7 @@ func UpdateContent(r *gin.Context) {
 	*/
 
 	var doc models.Document
-	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
+	err := db.Db.Where("id = ?", doc_id).First(&doc).Error
 
 	if err != nil {
 		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
