@@ -14,8 +14,10 @@ import MenuBar from "./MenuBar";
 import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import type { DocumentItem } from "./ExistingDocuments";
+import RemoteSelections from "./RemoteSelections";
 
 
+// TipTap editor feature set used by the MenuBar + editor surface
 const extensions = [TextStyleKit, StarterKit.configure({
   bulletList: false,
   orderedList: false,
@@ -34,6 +36,7 @@ export interface DecodedToken {
 }
 
 function getCurrentUser(): DecodedToken | null {
+  // Pulls the JWT from localStorage and safely decodes it into user info
   const token = localStorage.getItem("access_token");
   if (!token) return null;
 
@@ -45,36 +48,47 @@ function getCurrentUser(): DecodedToken | null {
 }
 
 export default function TextEditor() {
+  // UI and collaboration state
   const [onlineColabs, setOnlineColabs] = useState([]);
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [content, setContent] = useState<any>(null)
   const [id, setId] = useState("")
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
+  const lastContentSentRef = useRef<number>(0);
+  const isApplyingRemoteRef = useRef<boolean>(false);
   const CURSOR_THROTTLE_MS = 80;
+  const CONTENT_THROTTLE_MS = 120;
 
+  // Remote cursor/selection overlays, keyed by user id
   const [remoteSelections, setRemoteSelections] = useState<
     Record<number, { from: number; to: number; username: string }>
   >({});
 
+  // Active WebSocket connection for live collaboration
   const socketRef = useRef<WebSocket | null>(null);
 
   // get the document_id from the url
   const { link: link } = useParams();
 
+  // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
     const acc_token = localStorage.getItem("access_token") ?? null;
     setToken(acc_token);
 
   }, []);
 
+  // EFFECT: mirror doc id into local state for convenience
   useEffect(() => {
     if (!doc?.id) return;
     setId(doc.id)
 
   }, [doc?.id])
 
+  // EFFECT (API): load document data by share link
   useEffect(() => {
     if (!token || !link) return;
     const load = async () => {
@@ -95,45 +109,7 @@ export default function TextEditor() {
   // get the current user 
   const currentUser = getCurrentUser();
 
-  if (!currentUser) {
-    return <div>Loading...</div>;
-  }
-
-  useEffect(() => {
-    if (!id || !token) return;
-
-    const ws = new WebSocket(`ws://localhost:8080/ws/document/${id}?token=${encodeURIComponent(token)}`);
-
-    socketRef.current = ws
-
-    return () => {
-      ws.close();
-    };
-  }, [id, token]);
-
-  useEffect(() => {
-    if (!socketRef.current) return;
-
-    socketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.event === "selection") {
-
-        // ignore user's cursor
-        if (data.user_id === currentUser?.user_id) return;
-
-        setRemoteSelections(prev => ({
-          ...prev,
-          [data.user_id]: {
-            from: data.from,
-            to: data.to,
-            username: data.username,
-          }
-        }));
-      }
-    };
-  }, [currentUser?.user_id]);
-
+  // EFFECT (API): fetch online collaborators for the document
   useEffect(() => {
     if (!id || !token) return;
 
@@ -162,32 +138,115 @@ export default function TextEditor() {
   const editor = useEditor({
     extensions,
     content: doc?.Content,
+    // HANDLER: local edits -> throttle -> update local content and broadcast over WS
     onUpdate: ({ editor }) => {
+      if (isApplyingRemoteRef.current) return;
+
+      const now = Date.now();
+      if (now - lastContentSentRef.current < CONTENT_THROTTLE_MS) {
+        return;
+      }
+
+      lastContentSentRef.current = now;
       setContent(editor.getJSON())
+
+      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      socketRef.current.send(
+        JSON.stringify({
+          event: "content",
+          user_id: currentUser?.user_id,
+          username: currentUser?.username,
+          content: editor.getJSON()
+        })
+      );
     },
   });
 
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
+
+  // EFFECT (WS): connect to document WebSocket + handle incoming messages
+  useEffect(() => {
+    if (!id || !token) return;
+
+    const ws = new WebSocket(`ws://localhost:8080/ws/document/${id}?token=${encodeURIComponent(token)}`);
+    socketRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.event === "selection") {
+        // ignore user's cursor
+        if (data.user_id === currentUser?.user_id) return;
+
+        setRemoteSelections(prev => ({
+          ...prev,
+          [data.user_id]: {
+            from: data.from,
+            to: data.to,
+            username: data.username,
+          }
+        }));
+      }
+
+      if (data.event === "content") {
+        if (!editor) return;
+        if (data.user_id === currentUser?.user_id) return;
+        if (!data.content) return;
+
+        try {
+          isApplyingRemoteRef.current = true;
+          editor.commands.setContent(data.content, false);
+        } finally {
+          isApplyingRemoteRef.current = false;
+        }
+      }
+
+      if (data.event === "user left") {
+        setRemoteSelections(prev => {
+          const next = { ...prev };
+          delete next[data.user_id];
+          return next;
+        });
+      }
+    };
+
+    ws.onerror = () => {
+      console.log("websocket error");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [id, token, currentUser?.user_id, editor]);
+
+  // EFFECT: when doc content arrives, seed editor content
   useEffect(() => {
     if (!editor || !doc?.Content) return;
     editor.commands.setContent(doc.Content);
 
   }, [editor, doc?.Content]);
 
+  // EFFECT (WS): send cursor/selection updates over WebSocket
   useEffect(() => {
     if (!editor || !socketRef.current) return
 
     const handleSelectionUpdate = ({ editor }: any) => {
 
       const now = Date.now();
-      if (now - lastCursorSentRef.current < CURSOR_THROTTLE_MS) {
-        return;
-      }
+      if (now - lastCursorSentRef.current < CURSOR_THROTTLE_MS) return;
 
       lastCursorSentRef.current = now;
 
       const { from, to } = editor.state.selection;
 
-      socketRef.current?.send(
+      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+
+      socketRef.current.send(
         JSON.stringify({
           event: "selection",
           user_id: currentUser?.user_id,
@@ -205,64 +264,6 @@ export default function TextEditor() {
   }, [editor, currentUser]
   )
 
-
-  function RemoteSelections({ selections }: { selections: any }) {
-    return (
-      <>
-        {Object.entries(selections).map(([userId, sel]: any) => {
-          const isCursor = sel.from === sel.to;
-
-          return (
-            <div
-              key={userId}
-              style={{
-                position: "absolute",
-                left: `${sel.from % 500}px`,
-                top: `${Math.floor(sel.from / 500) * 20}px`,
-                pointerEvents: "none",
-                zIndex: 20,
-              }}
-            >
-              {isCursor && (
-                <div
-                  style={{
-                    width: "2px",
-                    height: "20px",
-                    background: "#4f46e5",
-                  }}
-                />
-              )}
-
-              {!isCursor && (
-                <div
-                  style={{
-                    width: Math.min(200, (sel.to - sel.from) * 2),
-                    height: "20px",
-                    background: "rgba(99,102,241,0.25)",
-                    borderRadius: "4px",
-                  }}
-                />
-              )}
-
-              <div
-                style={{
-                  fontSize: "10px",
-                  background: "#4f46e5",
-                  color: "#fff",
-                  padding: "2px 4px",
-                  borderRadius: "4px",
-                  marginTop: "2px",
-                }}
-              >
-                {sel.username}
-              </div>
-            </div>
-          );
-        })}
-      </>
-    );
-  }
-
   return (
 
     <div className={styles.pageWrapper}>
@@ -272,13 +273,22 @@ export default function TextEditor() {
 
       <div className={styles.contentWrapper}>
 
-        <div className={styles.editorScrollContainer} style={{ position: "relative" }}>
+        <div
+          className={styles.editorScrollContainer}
+          style={{ position: "relative" }}
+          ref={editorContainerRef}
+        >
           <EditorContent editor={editor} className={styles.editorContent} />
-          <RemoteSelections selections={remoteSelections} />
+          <RemoteSelections
+            selections={remoteSelections}
+            editor={editor}
+            editorContainerRef={editorContainerRef}
+          />
         </div>
 
-        <OnlineEditors users={onlineColabs} />
+        {      /*  <OnlineEditors users={onlineColabs} /> */}
       </div>
     </div>
   );
 }
+
