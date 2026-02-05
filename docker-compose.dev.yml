@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - ./backend/.env.docker:/app/.env
+    tty: true
+    stdin_open: true
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
