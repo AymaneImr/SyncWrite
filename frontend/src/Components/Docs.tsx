@@ -9,6 +9,7 @@ import table_left_icon from '../assets/table-layout-svgrepo-com.svg'
 import ExistingDocuments from './ExistingDocuments.tsx';
 import OpenByLinkModal from './OpenByLinkModal.tsx';
 import { useNavigate } from 'react-router-dom';
+import CreateDocumentModal from './CreateDocModal.tsx';
 
 
 export default function DocsPage() {
@@ -17,6 +18,7 @@ export default function DocsPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedTable, setUploadedTable] = useState<File | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleTextUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -47,7 +49,7 @@ export default function DocsPage() {
 
     if (!link || !token) return;
     const load = async () => {
-      const res = await fetch(`http://localhost:8080/api/document/link/${link}/open`, {
+      const res = await fetch(`http://localhost:8080/api/documents/link/${link}/open`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -57,6 +59,7 @@ export default function DocsPage() {
       if (!res.ok) {
         const err = await res.text();
         console.error(err);
+        return;
       }
 
       navigate(`/editor/${link}`)
@@ -64,6 +67,31 @@ export default function DocsPage() {
 
     load()
     setShowLinkModal(false)
+  }
+
+  const handleCreateDocument = async (title: string) => {
+    if (!token) return;
+
+    const load = async () => {
+
+      const res = await fetch(`http://localhost:8080/api/documents/create`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title
+        })
+      });
+
+      if (!res.ok) {
+        console.error(await res.text())
+      }
+    };
+    load()
+
+    setShowCreateModal(false)
   }
 
   return (
@@ -82,7 +110,7 @@ export default function DocsPage() {
               iconBg='#d6d6ff'
               uploadAccept=".txt,.pdf"
               onUpload={handleTextUpload}
-              onCreate={() => setShowEditor(true)}
+              onCreate={() => setShowCreateModal(true)}
               onOpenExisting={() => setShowExistingDocuments(true)}
               onOpenByLink={() => setShowLinkModal(true)}
               leftIcon={text_left_icon}
@@ -135,6 +163,14 @@ export default function DocsPage() {
           }}
         />
       )}
+
+      {showCreateModal && (
+        <CreateDocumentModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateDocument}
+        />
+      )}
+
     </div>
   );
 }
