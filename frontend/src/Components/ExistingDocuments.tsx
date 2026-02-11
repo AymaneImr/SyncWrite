@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "../css/ExistingDocuments.module.css";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
@@ -23,6 +23,7 @@ export default function ExistingDocuments({ onBack }: Props) {
 
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<DocumentItem[]>([])
+  const [searchQuery, SetSearchQuery] = useState("");
   const token = localStorage.getItem("access_token");
 
   useEffect(() => {
@@ -67,6 +68,22 @@ export default function ExistingDocuments({ onBack }: Props) {
     load()
   }
 
+  const filteredDocs = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return documents;
+
+    return documents.filter((doc) => {
+      const searchableText = [
+        doc.title,
+        doc.description
+      ]
+        .join()
+        .toLowerCase()
+
+      return searchableText.includes(query);
+    });
+  }, [documents, searchQuery])
+
   const createdDate = (unixSeconds: string) =>
     new Date(Number(unixSeconds) * 1000).toLocaleDateString("en-US", {
       year: "numeric",
@@ -101,12 +118,24 @@ export default function ExistingDocuments({ onBack }: Props) {
         <input
           className={styles.search}
           placeholder="Search documents..."
+          value={searchQuery}
+          onChange={(e) => SetSearchQuery(e.target.value)}
         />
-        <button className={styles.filterBtn}>Filter</button>
+        <button
+          className={styles.filterBtn}
+          onClick={() => SetSearchQuery("")}
+          disabled={!searchQuery.trim()}
+          type="button"
+        >
+          Clear
+        </button>
       </div>
 
       <div className={styles.list}>
-        {documents.map(doc => (
+        {filteredDocs.length === 0 && (
+          <div className={styles.emptyState}>No documents match your search.</div>
+        )}
+        {filteredDocs.map(doc => (
           <div
             role="button"
             className={styles.cardBtn}
