@@ -65,7 +65,7 @@ func DocumentAccessLink() gin.HandlerFunc {
 			return
 		}
 
-		if doc.ID == userID {
+		if doc.OwnerID == userID {
 			// User IS the owner
 			r.Set("access_level", "owner")
 			r.Set("document", doc)
