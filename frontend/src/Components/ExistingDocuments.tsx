@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import styles from "../css/ExistingDocuments.module.css";
 import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 
 export type DocumentItem = {
   id: string;
@@ -14,38 +14,6 @@ export type DocumentItem = {
   last_edited_by: string;
   link: string;
 };
-
-/*
-const documents: DocumentItem[] = [
-  {
-    id: "1",
-    title: "Project Proposal.pdf",
-    description:
-      "This document outlines the comprehensive project proposal for...",
-    createdAt: "January 10, 2026",
-    updatedAt: "2 hours ago",
-    size: "2.4 MB",
-  },
-  {
-    id: "2",
-    title: "Meeting Notes.txt",
-    description:
-      "Key takeaways from the quarterly review meeting: Discuss new...",
-    createdAt: "January 9, 2026",
-    updatedAt: "2 days ago",
-    size: "45 KB",
-  },
-  {
-    id: "3",
-    title: "Research Paper.pdf",
-    description:
-      "An in-depth analysis of modern web application architectures...",
-    createdAt: "January 8, 2026",
-    updatedAt: "4 days ago",
-    size: "1.8 MB",
-  },
-];
-*/
 
 type Props = {
   onBack: () => void;
@@ -72,7 +40,32 @@ export default function ExistingDocuments({ onBack }: Props) {
 
     loadDocs();
   }, [token]);
-  console.log(documents);
+
+  const handleDeleteDoc = async (
+    id: string,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    const load = async () => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+      }
+
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id))
+    };
+
+    load()
+  }
 
   const createdDate = (unixSeconds: string) =>
     new Date(Number(unixSeconds) * 1000).toLocaleDateString("en-US", {
@@ -114,11 +107,18 @@ export default function ExistingDocuments({ onBack }: Props) {
 
       <div className={styles.list}>
         {documents.map(doc => (
-          <button
-            type="button"
+          <div
+            role="button"
             className={styles.cardBtn}
             key={doc.id}
             onClick={() => navigate(`/editor/${doc.link}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(`/editor/${doc.link}`);
+              }
+            }}
+            tabIndex={0}
           >
             <div className={styles.card}>
               <div className={styles.icon}>
@@ -139,10 +139,18 @@ export default function ExistingDocuments({ onBack }: Props) {
                   <span>{doc.size}size</span>
                 </div>
               </div>
+              <div>
+                <button type="button"
+                  className={styles.delete}
+                  onClick={(e) => handleDeleteDoc(doc.id, e)}
+                >
+                  <Trash2 />
+                </button>
+              </div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
-    </div>
+    </div >
   );
 }

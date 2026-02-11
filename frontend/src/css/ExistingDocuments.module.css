@@ -104,6 +104,30 @@
 }
 
 
+.delete {
+  width: 33px;
+  height: 33px;
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 120ms ease;
+}
+
+.delete:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+}
+
+.delete:active {
+  transform: scale(0.96);
+}
+
+.delete:focus-visible {
+  outline: 2px solid #fb7185;
+  outline-offset: 2px;
+}
+
 .content {
   flex: 1;
 }
