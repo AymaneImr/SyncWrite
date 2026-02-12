@@ -23,7 +23,7 @@ func StartDocumentSession(r *gin.Context) {
 		// session already exist
 		r.JSON(http.StatusOK, gin.H{
 			"message": "Session already exists",
-			"token":   docSession.Token,
+			"session": docSession,
 		})
 		return
 	}
@@ -46,7 +46,7 @@ func StartDocumentSession(r *gin.Context) {
 
 	r.JSON(http.StatusOK, gin.H{
 		"message": "Session started",
-		"token":   token,
+		"session": docSession,
 	})
 }
 
