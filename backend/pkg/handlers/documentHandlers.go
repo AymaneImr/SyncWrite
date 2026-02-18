@@ -85,13 +85,18 @@ func LoadDocument(r *gin.Context) {
 
 func LoadDocumentByLink(r *gin.Context) {
 	link := r.Param("link")
-	//user_id := r.GetUint("user_id")
+	user_id := r.GetUint("user_id")
 
 	var doc models.Document
-	err := db.Db.Where("link = ?", link).First(&doc).Error
+	if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
+		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	_, err := StartDocumentSession(doc.ID, user_id)
 
 	if err != nil {
-		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		r.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 

@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +24,19 @@ func DocumentAccess() gin.HandlerFunc {
 		var doc models.Document
 		if err := db.Db.Where("id = ?", docID).First(&doc).Error; err != nil {
 			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			return
+		}
+
+		// Check if document session exists
+		var doc_session models.DocumentSession
+		if err := db.Db.Where("document_id = ? AND user_id = ?", doc.ID, userID).Last(&doc_session).Error; err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "Document session not found"})
+			return
+		}
+
+		// Check if document session is valid
+		if doc_session.ExpiresAt <= time.Now().Unix() {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "Session expiredd"})
 			return
 		}
 
@@ -62,6 +76,19 @@ func DocumentAccessLink() gin.HandlerFunc {
 		var doc models.Document
 		if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
 			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			return
+		}
+
+		// Check if document session exists
+		var doc_session models.DocumentSession
+		if err := db.Db.Where("document_id = ? AND user_id = ?", doc.ID, userID).Last(&doc_session).Error; err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "Document session not found"})
+			return
+		}
+
+		// Check if document session is active
+		if doc_session.ExpiresAt <= time.Now().Unix() {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
 			return
 		}
 

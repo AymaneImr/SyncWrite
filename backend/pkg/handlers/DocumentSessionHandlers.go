@@ -4,6 +4,8 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
+
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,25 +13,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartDocumentSession(r *gin.Context) {
-	doc_idStr := r.Param("id")
-	user_id := r.GetUint("user_id")
+func StartDocumentSession(doc_id uint, user_id uint) (*models.DocumentSession, error) {
 
-	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
-	doc_id := uint(docID64)
-
+	// Check if document session exists
 	var docSession models.DocumentSession
-	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).First(&docSession).Error; err == nil {
-		// session already exist
-		r.JSON(http.StatusOK, gin.H{
-			"message": "Session already exists",
-			"session": docSession,
-		})
-		return
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).Last(&docSession).Error; err == nil {
+		if time.Now().Unix() < docSession.ExpiresAt {
+
+			// session already exist and not expired => return it
+			return &docSession, nil
+		}
 	}
 
 	token := utils.GenerateSessionToken()
 
+	// Session doesn't exist => create one
 	newSession := models.DocumentSession{
 		DocumentID:    doc_id,
 		Token:         token,
@@ -40,14 +38,10 @@ func StartDocumentSession(r *gin.Context) {
 	}
 
 	if err := db.Db.Create(&newSession).Error; err != nil {
-		r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create document session"})
-		return
+		return nil, errors.New("Failed to create document session")
 	}
 
-	r.JSON(http.StatusOK, gin.H{
-		"message": "Session started",
-		"session": docSession,
-	})
+	return &newSession, nil
 }
 
 func EndDocumentSession(r *gin.Context) {
