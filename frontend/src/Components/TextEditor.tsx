@@ -55,9 +55,6 @@ export default function TextEditor() {
   const [content, setContent] = useState<any>(null)
   const [id, setId] = useState("")
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
-  const [session, setSession] = useState(null)
-  const [sessionActive, setSessionActive] = useState<boolean>(false);
-  const [expiresAt, SetExpiresAt] = useState<string | null>(null);
 
   // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
@@ -76,67 +73,6 @@ export default function TextEditor() {
 
   // get the document_id from the url
   const { link: link } = useParams();
-
-  // Start document session
-  useEffect(() => {
-    if (!token || !id) return;
-    const start = async () => {
-      const res = await fetch(`http://localhost:8080/api/documents/${id}/session/start`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        console.error(await res.text());
-      }
-
-      const data = await res.json();
-
-      setSessionActive(true)
-      setSession(data.session)
-      SetExpiresAt(data.session.expires_at)
-    }
-
-    start()
-  }, [token, id]);
-
-  // End document session once expired
-  // TODO: implement auto session refresh later,
-  // right now manual refresh is needed
-  useEffect(() => {
-    if (!expiresAt || !sessionActive) return;
-
-    const now = Date.now() / 1000;
-    const remaining = Number(expiresAt) - now;
-
-    if (remaining <= 0) {
-
-      const end = async () => {
-        const res = await fetch(`http://localhost:8080/api/documents/${id}/session/end`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          console.error(await res.text());
-        }
-
-        const data = await res.json();
-
-        setSessionActive(false)
-        return <div>{data.message}</div>
-      }
-
-      end()
-      return
-    }
-  }, [expiresAt, id, token, sessionActive])
 
   // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
@@ -163,6 +99,10 @@ export default function TextEditor() {
           "Content-Type": "application/json",
         },
       });
+
+      if (!res.ok) {
+        console.error(await res.text());
+      }
 
       const data = await res.json();
       setDoc(data.document)
