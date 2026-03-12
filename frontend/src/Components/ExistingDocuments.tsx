@@ -1,7 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../css/ExistingDocuments.module.css";
 import { useNavigate } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Trash2, FileText } from "lucide-react";
+
+export const updatedAgo = (updatedAtSec?: string) => {
+  if (!updatedAtSec) return "err";
+
+  const sec = Number(updatedAtSec);
+  const diffMs = Date.now() - sec * 1000;
+
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+};
 
 export type DocumentItem = {
   id: string;
@@ -91,20 +108,6 @@ export default function ExistingDocuments({ onBack }: Props) {
       day: "numeric",
     });
 
-  const updatedAgo = (updatedAtSec: string) => {
-    const sec = Number(updatedAtSec);
-    const diffMs = Date.now() - sec * 1000;
-
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return "just now";
-    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-
-    const days = Math.floor(hours / 24);
-    return `${days} day${days === 1 ? "" : "s"} ago`;
-  };
 
   return (
     <div className={styles.page}>
@@ -151,7 +154,7 @@ export default function ExistingDocuments({ onBack }: Props) {
           >
             <div className={styles.card}>
               <div className={styles.icon}>
-                📄
+                <FileText size={34} />
               </div>
 
               <div className={styles.content}>

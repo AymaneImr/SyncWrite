@@ -18,7 +18,7 @@ import {
   Save,
 } from "lucide-react";
 
-export default function MenuBar({ editor, id, token, link }: { editor: Editor | null, id?: string, token: string | null, link: string }) {
+export default function MenuBar({ editor, id, token, link }: { editor: Editor | null, id?: string, token: string | null, link: string | undefined }) {
 
   if (!editor) return null;
 

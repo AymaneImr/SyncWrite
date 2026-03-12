@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { FileText, LogOut } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -13,7 +14,7 @@ import OnlineEditors from "./OnlineEditors";
 import MenuBar from "./MenuBar";
 import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import type { DocumentItem } from "./ExistingDocuments";
+import { updatedAgo, type DocumentItem } from "./ExistingDocuments";
 import RemoteSelections from "./RemoteSelections";
 
 
@@ -54,6 +55,7 @@ export default function TextEditor() {
   const [token, setToken] = useState<string | null>(null);
   const [content, setContent] = useState<any>(null)
   const [id, setId] = useState("")
+  const [showEndSessionModal, SetshowEndSessionModal] = useState(false)
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Throttling + remote-apply guard to prevent update loops
@@ -72,7 +74,7 @@ export default function TextEditor() {
   const socketRef = useRef<WebSocket | null>(null);
 
   // get the document_id from the url
-  const { link: link } = useParams();
+  const { link } = useParams<{ link?: string }>();
 
   // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
@@ -272,6 +274,31 @@ export default function TextEditor() {
   return (
 
     <div className={styles.pageWrapper}>
+      <div className={styles.docInfoMenu}>
+
+        <div className={styles.docInfo}>
+          <div className={styles.icon}>
+            <FileText size={22} />
+          </div>
+
+          <div className={styles.docName}>
+            {doc?.title}
+          </div>
+
+          <div className={styles.lastEdited}>
+            Last edited {updatedAgo(doc?.updated_at)}
+          </div>
+        </div>
+
+        <div
+          className={styles.btn}
+          role="button"
+          onClick={() => SetshowEndSessionModal(true)}
+        >
+          <LogOut size={17} /> End Session
+        </div>
+
+      </div>
       <div className={styles.menuBarWrapper}>
         <MenuBar editor={editor} id={id} token={token} link={link} />
       </div>
@@ -293,6 +320,39 @@ export default function TextEditor() {
 
         {      /*  <OnlineEditors users={onlineColabs} /> */}
       </div>
+
+      {showEndSessionModal && (
+        <div
+          className={styles.overlay}
+          onClick={() => SetshowEndSessionModal(false)}
+        >
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <h2 className={styles.title}>
+              End collaborative session?
+            </h2>
+
+            <p className={styles.description}>
+              You will leave this document session. Your changes have been saved,
+              but you won't see live updates from other collaborators until you rejoin.
+            </p>
+
+            <div className={styles.btns}>
+              <button
+                className={styles.cancel}
+                onClick={() => SetshowEndSessionModal(false)}
+              >
+                Cancel
+              </button>
+              <button className={styles.end}>End Session</button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

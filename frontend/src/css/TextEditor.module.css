@@ -141,6 +141,127 @@
   color: #111827;
 }
 
+
+.icon {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1d58e8;
+  font-size: 22px;
+}
+
+.docInfoMenu {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  max-width: 100%;
+}
+
+.docInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.docName {
+  font-size: 18px;
+  font-weight: 400;
+  color: #111827;
+}
+
+.lastEdited {
+  color: #676a8a;
+  font-size: 12px;
+}
+
+.btn {
+  display: flex;
+  color: #45505e;
+  font-size: 15px;
+  font-weight: 300;
+  margin-right: 1rem;
+  margin-left: auto;
+  padding: 5px 12px 5px 12px;
+  border-radius: 8px;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  color: #d1031a;
+  background-color: #ffeeee;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 540px;
+  background: white;
+  padding: 20px;
+  border: 1.5px solid;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.description {
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.btns {
+  display: flex;
+  justify-content: end;
+  gap: 20px;
+}
+
+.cancel {
+  font-size: 15px;
+  color: black;
+  padding: 5px 15px 5px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancel:hover {
+  background-color: #d5d7db;
+  transition: 0.2s;
+}
+
+.end {
+  font-size: 15px;
+  color: white;
+  background-color: #f10f22;
+  padding: 5px 15px 5px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.end:hover {
+  background-color: #c10f1d;
+  transition: 0.2s;
+}
+
 .ProseMirror ul,
 .editorContent ul {
   list-style-type: disc;
