@@ -53,7 +53,7 @@ func DeleteDocumentSession(r *gin.Context) {
 	doc_id := uint(docID64)
 
 	var docSession models.DocumentSession
-	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).First(&docSession).Error; err != nil {
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).Last(&docSession).Error; err != nil {
 		r.JSON(http.StatusForbidden, gin.H{"error": "Session expired"})
 		return
 	}
@@ -74,7 +74,7 @@ func EndDocumentSession(r *gin.Context) {
 	doc_id := uint(docID64)
 
 	var docSession models.DocumentSession
-	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).First(&docSession).Error; err != nil {
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).Last(&docSession).Error; err != nil {
 		r.JSON(http.StatusForbidden, gin.H{"error": "Session expired"})
 		return
 	}
