@@ -28,6 +28,7 @@ type DocumentSession struct {
 	NumberOfUsers int8   `gorm:"type:int8" json:"number_of_users"`
 	CreatedAt     int64  `gorm:"autoCreateTime:milli; not null" json:"created_at"`
 	ExpiresAt     int64  `gorm:"type:int8; not null" json:"expires_at"`
+	IsRevoked     bool   `gorm:"type:bool; not null" json:"is_revoked"`
 }
 
 // Permissions

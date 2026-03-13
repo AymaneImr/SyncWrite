@@ -18,7 +18,7 @@ func StartDocumentSession(doc_id uint, user_id uint) (*models.DocumentSession, e
 	// Check if document session exists
 	var docSession models.DocumentSession
 	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).Last(&docSession).Error; err == nil {
-		if time.Now().Unix() < docSession.ExpiresAt {
+		if time.Now().Unix() < docSession.ExpiresAt && !docSession.IsRevoked {
 
 			// session already exist and not expired => return it
 			return &docSession, nil
@@ -35,6 +35,7 @@ func StartDocumentSession(doc_id uint, user_id uint) (*models.DocumentSession, e
 		NumberOfUsers: 1,
 		CreatedAt:     time.Now().Unix(),
 		ExpiresAt:     time.Now().Add(30 * time.Minute).Unix(),
+		IsRevoked:     false,
 	}
 
 	if err := db.Db.Create(&newSession).Error; err != nil {
@@ -42,6 +43,27 @@ func StartDocumentSession(doc_id uint, user_id uint) (*models.DocumentSession, e
 	}
 
 	return &newSession, nil
+}
+
+func DeleteDocumentSession(r *gin.Context) {
+	doc_idStr := r.Param("id")
+	user_id := r.GetUint("user_id")
+
+	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	doc_id := uint(docID64)
+
+	var docSession models.DocumentSession
+	if err := db.Db.Where("document_id = ? AND user_id = ?", doc_id, user_id).First(&docSession).Error; err != nil {
+		r.JSON(http.StatusForbidden, gin.H{"error": "Session expired"})
+		return
+	}
+
+	if err := db.Db.Delete(&docSession).Error; err != nil {
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete session"})
+		return
+	}
+
+	r.JSON(http.StatusOK, gin.H{"message": "Session deleted"})
 }
 
 func EndDocumentSession(r *gin.Context) {
@@ -57,8 +79,10 @@ func EndDocumentSession(r *gin.Context) {
 		return
 	}
 
-	if err := db.Db.Delete(&docSession).Error; err != nil {
-		r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete session"})
+	docSession.IsRevoked = true
+
+	if err := db.Db.Save(&docSession).Error; err != nil {
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to end session"})
 		return
 	}
 

@@ -13,7 +13,6 @@ func RegisterRoutes(r *gin.Engine) {
 	// Auth routes
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/register", handlers.RegisterUser)        // works
 		auth.POST("/login", handlers.Login)                  // works
 		auth.POST("/resetPassword", handlers.ChnagePassword) // works
 		auth.POST("/logout", utils.Auth(), handlers.Logout)  // works
@@ -34,6 +33,7 @@ func RegisterRoutes(r *gin.Engine) {
 
 		//docs.PUT("/:id/session/start", utils.DocumentAccess(), handlers.StartDocumentSession)
 		docs.PUT("/:id/session/end", utils.DocumentAccess(), handlers.EndDocumentSession)
+		docs.PUT("/:id/session/delete", utils.DocumentAccess(), handlers.DeleteDocumentSession)
 		docs.GET("/:id/session/active", utils.DocumentAccess(), handlers.GetActiveUsers)
 		//docs.PUT("/save/:id", handlers.SaveDocument)
 	}

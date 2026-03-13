@@ -20,7 +20,7 @@ func DocumentAccess() gin.HandlerFunc {
 		docID := uint(docID64)
 		userID := r.GetUint("user_id")
 
-		// Check if user is the OWNER of the document
+		// Check if the document exists
 		var doc models.Document
 		if err := db.Db.Where("id = ?", docID).First(&doc).Error; err != nil {
 			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
@@ -35,11 +35,12 @@ func DocumentAccess() gin.HandlerFunc {
 		}
 
 		// Check if document session is valid
-		if doc_session.ExpiresAt <= time.Now().Unix() {
+		if doc_session.ExpiresAt <= time.Now().Unix() || doc_session.IsRevoked {
 			r.JSON(http.StatusUnauthorized, gin.H{"error": "Session expiredd"})
 			return
 		}
 
+		// Check if user is the OWNER of the document
 		if doc.OwnerID == userID {
 
 			// User IS the owner
@@ -72,7 +73,7 @@ func DocumentAccessLink() gin.HandlerFunc {
 		link := r.Param("link")
 		userID := r.GetUint("user_id")
 
-		// Check if user is the OWNER of the document
+		// Check if the document exists
 		var doc models.Document
 		if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
 			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
@@ -87,11 +88,12 @@ func DocumentAccessLink() gin.HandlerFunc {
 		}
 
 		// Check if document session is active
-		if doc_session.ExpiresAt <= time.Now().Unix() {
+		if doc_session.ExpiresAt <= time.Now().Unix() || doc_session.IsRevoked {
 			r.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
 			return
 		}
 
+		// Check if user is the OWNER of the document
 		if doc.OwnerID == userID {
 			// User IS the owner
 			r.Set("access_level", "owner")
