@@ -252,7 +252,6 @@ export default function TextEditor() {
       const { from, to } = editor.state.selection;
 
       if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
-
       socketRef.current.send(
         JSON.stringify({
           event: "selection",
@@ -270,6 +269,26 @@ export default function TextEditor() {
     }
   }, [editor, currentUser]
   )
+
+  const handleEndSession = async () => {
+    if (!id || !token) return;
+
+    const res = await fetch(
+      `http://localhost:8080/api/documents/${id}/session/end`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.log("err session:", err);
+    }
+  };
 
   return (
 
@@ -347,7 +366,14 @@ export default function TextEditor() {
               >
                 Cancel
               </button>
-              <button className={styles.end}>End Session</button>
+              <button
+                className={styles.end}
+                onClick={() => {
+                  handleEndSession();
+                  SetshowEndSessionModal(false)
+                }}
+              >
+                End Session</button>
             </div>
 
           </div>
