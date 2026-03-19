@@ -50,7 +50,6 @@ function getCurrentUser(): DecodedToken | null {
 
 export default function TextEditor() {
   // UI and collaboration state
-  const [onlineColabs, setOnlineColabs] = useState([]);
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [content, setContent] = useState<any>(null)
@@ -115,32 +114,7 @@ export default function TextEditor() {
 
   // get the current user 
   const currentUser = getCurrentUser();
-
-  // EFFECT (API): fetch online collaborators for the document
-  useEffect(() => {
-    if (!id || !token) return;
-
-    const load = async () => {
-
-      const res = await fetch(`http://localhost:8080/api/documents/${id}/collaborators`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }
-      });
-
-      if (!res.ok) {
-        const err = await res.text()
-        console.log("errr: ", err);
-        return;
-      }
-
-      const data = await res.json();
-      setOnlineColabs(data.collaborators)
-    }
-
-    load()
-  }, [id, token]);
+  const isOwner = currentUser?.user_id === doc?.owner_id;
 
   const editor = useEditor({
     extensions,
@@ -287,7 +261,11 @@ export default function TextEditor() {
     if (!res.ok) {
       const err = await res.text();
       console.log("err session:", err);
+      return;
     }
+
+    socketRef.current?.close();
+
   };
 
   return (
@@ -309,13 +287,15 @@ export default function TextEditor() {
           </div>
         </div>
 
-        <div
-          className={styles.btn}
-          role="button"
-          onClick={() => SetshowEndSessionModal(true)}
-        >
-          <LogOut size={17} /> End Session
-        </div>
+        {isOwner && (
+          <div
+            className={styles.btn}
+            role="button"
+            onClick={() => SetshowEndSessionModal(true)}
+          >
+            <LogOut size={17} /> End Session
+          </div>
+        )}
 
       </div>
       <div className={styles.menuBarWrapper}>
@@ -337,7 +317,7 @@ export default function TextEditor() {
           />
         </div>
 
-        {      /*  <OnlineEditors users={onlineColabs} /> */}
+        <OnlineEditors id={id} token={token} />
       </div>
 
       {showEndSessionModal && (
