@@ -5,6 +5,7 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"encoding/hex"
+	"time"
 )
 
 func GenerateDocumentLink() string {
@@ -42,4 +43,19 @@ func HasDocumentAccess(userID uint, docID uint) bool {
 	}
 
 	return false
+}
+
+func HasActiveDocumentSession(userID uint, docID uint) bool {
+
+	var docSession models.DocumentSession
+	if err := db.Db.Where("document_id = ? AND user_id = ?", docID, userID).
+		Last(&docSession).Error; err != nil {
+		return false
+	}
+
+	if docSession.IsRevoked || docSession.ExpiresAt < time.Now().Unix() {
+		return false
+	}
+
+	return true
 }

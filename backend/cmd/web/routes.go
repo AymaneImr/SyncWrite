@@ -14,6 +14,7 @@ func RegisterRoutes(r *gin.Engine) {
 	auth := r.Group("/api/auth")
 	{
 		auth.POST("/login", handlers.Login)                  // works
+		auth.POST("/register", handlers.RegisterUser)        // works
 		auth.POST("/resetPassword", handlers.ChnagePassword) // works
 		auth.POST("/logout", utils.Auth(), handlers.Logout)  // works
 	}

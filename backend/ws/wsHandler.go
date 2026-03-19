@@ -3,7 +3,6 @@ package ws
 import (
 	"document_editor/pkg/config"
 	"document_editor/pkg/utils"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -43,6 +42,11 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			return
 		}
 
+		if !utils.HasActiveDocumentSession(claims.UserID, doc_id) {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "document session expired"})
+			return
+		}
+
 		/*
 			access := r.GetString("access_level")
 			fmt.Println(access)
@@ -55,7 +59,6 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 		conn, err := upgrader.Upgrade(r.Writer, r.Request, nil)
 		if err != nil {
 			r.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't upgrade to websocket"})
-			fmt.Println("couldn't upgrade")
 			return
 		}
 

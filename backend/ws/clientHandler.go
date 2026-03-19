@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"document_editor/pkg/utils"
 	"encoding/json"
 
 	"github.com/gorilla/websocket"
@@ -15,6 +16,10 @@ func (c *Client) ReadPump() {
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
+			break
+		}
+
+		if !utils.HasActiveDocumentSession(c.UserID, c.DocumentID) {
 			break
 		}
 
