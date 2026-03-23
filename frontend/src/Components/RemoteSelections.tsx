@@ -1,6 +1,7 @@
 
 import React from "react";
 import type { Editor } from "@tiptap/react";
+import { getCollaboratorTheme } from "../common/collabTheme";
 
 type RemoteSelection = {
   from: number;
@@ -29,6 +30,7 @@ export default function RemoteSelections({
   return (
     <>
       {Object.entries(selections).map(([userId, sel]) => {
+        const theme = getCollaboratorTheme(Number(userId));
         const isCursor = sel.from === sel.to;
         const from = Math.min(sel.from, sel.to);
         const to = Math.max(sel.from, sel.to);
@@ -91,7 +93,7 @@ export default function RemoteSelections({
                 style={{
                   width: "2px",
                   height: `${cursorHeight}px`,
-                  background: "#4f46e5",
+                  background: theme.cursor,
                 }}
               />
             )}
@@ -107,7 +109,7 @@ export default function RemoteSelections({
                       left: `${rect.left - left}px`,
                       top: `${rect.top - top}px`,
                       position: "absolute",
-                      background: "rgba(99,102,241,0.25)",
+                      background: theme.soft,
                       borderRadius: "4px",
                     }}
                   />
@@ -118,7 +120,7 @@ export default function RemoteSelections({
             <div
               style={{
                 fontSize: "10px",
-                background: "#4f46e5",
+                background: theme.labelBg,
                 color: "#fff",
                 padding: "2px 4px",
                 borderRadius: "4px",

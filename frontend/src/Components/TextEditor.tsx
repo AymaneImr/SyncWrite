@@ -10,12 +10,13 @@ import StarterKit from "@tiptap/starter-kit";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import styles from "../css/TextEditor.module.css";
 import { useEffect, useState } from "react";
-import OnlineEditors from "./OnlineEditors";
+import OnlineEditors, { type OnlineUser } from "./OnlineEditors";
 import MenuBar from "./MenuBar";
 import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { updatedAgo, type DocumentItem } from "./ExistingDocuments";
 import RemoteSelections from "./RemoteSelections";
+import { press } from "framer-motion";
 
 
 // TipTap editor feature set used by the MenuBar + editor surface
@@ -56,6 +57,7 @@ export default function TextEditor() {
   const [id, setId] = useState("")
   const [showEndSessionModal, SetshowEndSessionModal] = useState(false)
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
 
   // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
@@ -187,12 +189,30 @@ export default function TextEditor() {
         }
       }
 
+      if (data.event === "user joined") {
+        setOnlineUsers((prev) => {
+          const exists = prev.some((user) => user.id === data.user_id);
+          if (exists) return prev;
+
+          return [
+            ...prev,
+            {
+              id: data.user_id,
+              username: data.username,
+            }
+          ];
+        });
+      }
+
       if (data.event === "user left") {
         setRemoteSelections(prev => {
           const next = { ...prev };
           delete next[data.user_id];
           return next;
         });
+
+        setOnlineUsers((prev) => prev.filter((user) => user.id !== data.user_id))
+
       }
     };
 
@@ -317,7 +337,14 @@ export default function TextEditor() {
           />
         </div>
 
-        <OnlineEditors id={id} token={token} />
+        <OnlineEditors
+          id={id}
+          token={token}
+          onlineUsers={onlineUsers}
+          setOnlineUsers={setOnlineUsers}
+          ownerId={doc?.owner_id}
+          currentUserId={currentUser.user_id}
+        />
       </div>
 
       {showEndSessionModal && (

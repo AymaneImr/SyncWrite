@@ -22,6 +22,7 @@ export const updatedAgo = (updatedAtSec?: string) => {
 
 export type DocumentItem = {
   id: string;
+  owner_id: string;
   title: string;
   Content: string;
   description: string;
