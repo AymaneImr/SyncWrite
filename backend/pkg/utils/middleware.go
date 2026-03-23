@@ -5,7 +5,6 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -23,7 +22,6 @@ func Auth() gin.HandlerFunc {
 		}
 
 		parts := strings.Split(authHeader, " ")
-		fmt.Println(len(parts))
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization format"})
 			c.Abort()

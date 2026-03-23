@@ -2,6 +2,8 @@ package ws
 
 import (
 	"document_editor/pkg/config"
+	"document_editor/pkg/db"
+	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
 	"net/http"
 	"strconv"
@@ -18,8 +20,6 @@ var upgrader = websocket.Upgrader{
 
 func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 	return func(r *gin.Context) {
-
-		username := r.GetString("username")
 
 		doc_idStr := r.Param("id")
 		docid64, _ := strconv.ParseUint(doc_idStr, 10, 64)
@@ -47,6 +47,12 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			return
 		}
 
+		var user models.User
+		if err := db.Db.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+			return
+		}
+
 		/*
 			access := r.GetString("access_level")
 			fmt.Println(access)
@@ -67,7 +73,7 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			Send:       make(chan []byte, 256),
 			UserID:     claims.UserID,
 			DocumentID: doc_id,
-			Username:   username,
+			Username:   user.Username,
 			Hub:        hub,
 		}
 

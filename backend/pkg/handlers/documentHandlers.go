@@ -5,7 +5,6 @@ import (
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
 	"encoding/json"
-	"fmt"
 
 	"net/http"
 	"strconv"
@@ -150,8 +149,6 @@ func UpdateContent(r *gin.Context) {
 	doc_id := uint(docID64)
 
 	access := r.GetString("access_level")
-	fmt.Println(access)
-	fmt.Println("access ", utils.CanEdit(access))
 	if !utils.CanEdit(access) {
 		r.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to edit this document"})
 		return

@@ -9,6 +9,7 @@ import (
 
 func (c *Client) ReadPump() {
 	defer func() {
+		_ = utils.RevokeDocumentSession(c.UserID, c.DocumentID)
 		c.Hub.Unregister <- c
 		c.Conn.Close()
 	}()

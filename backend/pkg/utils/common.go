@@ -59,3 +59,9 @@ func HasActiveDocumentSession(userID uint, docID uint) bool {
 
 	return true
 }
+
+func RevokeDocumentSession(userID uint, docID uint) error {
+	return db.Db.Model(&models.DocumentSession{}).
+		Where("document_id = ? AND user_id = ? AND is_revoked = false", docID, userID).
+		Update("is_revoked", true).Error
+}

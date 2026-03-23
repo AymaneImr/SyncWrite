@@ -4,7 +4,6 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
-	"fmt"
 
 	"errors"
 	"net/http"
@@ -112,8 +111,6 @@ func GetActiveUsers(r *gin.Context) {
 		r.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't load sessions"})
 		return
 	}
-
-	fmt.Println("sessions: ", sessions)
 
 	user_ids := make([]uint, 0, len(sessions))
 	seen := make(map[uint]struct{}, len(sessions))
