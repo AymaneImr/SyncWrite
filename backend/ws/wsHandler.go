@@ -42,6 +42,29 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			return
 		}
 
+		accessLevel := "read-only"
+
+		var doc models.Document
+		if err := db.Db.Select("id, owner_id").Where("id = ?", doc_id).First(&doc).Error; err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
+			return
+		}
+
+		if doc.OwnerID == claims.UserID {
+			accessLevel = "owner"
+		} else {
+			var collaborator models.DocumentCollaborator
+			if err := db.Db.
+				Select("permission").
+				Where("document_id = ? AND user_id = ?", doc_id, claims.UserID).
+				First(&collaborator).Error; err != nil {
+				r.JSON(http.StatusForbidden, gin.H{"error": "no access to document"})
+				return
+			}
+
+			accessLevel = collaborator.Permission
+		}
+
 		if !utils.HasActiveDocumentSession(claims.UserID, doc_id) {
 			r.JSON(http.StatusUnauthorized, gin.H{"error": "document session expired"})
 			return
@@ -74,6 +97,7 @@ func DocumentWebSocket(hub *Hub) gin.HandlerFunc {
 			UserID:     claims.UserID,
 			DocumentID: doc_id,
 			Username:   user.Username,
+			Access:     accessLevel,
 			Hub:        hub,
 		}
 

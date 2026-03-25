@@ -7,6 +7,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func isEditEvent(event string) bool {
+	return event == "content" || event == "editing" || event == "save"
+}
+
 func (c *Client) ReadPump() {
 	defer func() {
 		_ = utils.RevokeDocumentSession(c.UserID, c.DocumentID)
@@ -27,6 +31,15 @@ func (c *Client) ReadPump() {
 		var WSMessage WsData
 		if err := json.Unmarshal(msg, &WSMessage); err != nil {
 			break
+		}
+
+		if isEditEvent(WSMessage.Event) && !utils.CanEdit(c.Access) {
+			errorPayload, _ := json.Marshal(map[string]string{
+				"event": "error",
+				"error": "You do not have permission to edit this document",
+			})
+			c.Send <- errorPayload
+			continue
 		}
 
 		WSMessage.UserID = c.UserID

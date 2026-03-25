@@ -8,5 +8,6 @@ type Client struct {
 	UserID     uint
 	DocumentID uint
 	Username   string
+	Access     string
 	Hub        *Hub
 }
