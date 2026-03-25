@@ -17,6 +17,7 @@ import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { updatedAgo, type DocumentItem } from "./ExistingDocuments";
 import RemoteSelections from "./RemoteSelections";
+import Color from "@tiptap/extension-color";
 
 type ActivityToast = {
   id: number;
@@ -25,7 +26,7 @@ type ActivityToast = {
 };
 
 // TipTap editor feature set used by the MenuBar + editor surface
-const extensions = [TextStyleKit, StarterKit.configure({
+const extensions = [TextStyleKit, Color, StarterKit.configure({
   bulletList: false,
   orderedList: false,
   listItem: false,

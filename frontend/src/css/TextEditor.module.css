@@ -9,9 +9,10 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: white;
-  padding: 12px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 6px 16px;
+  border-bottom: 1px solid #e7ebf1;
+  backdrop-filter: blur(14px);
 }
 
 .contentWrapper {
@@ -41,77 +42,150 @@
 .toolbar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: #f9fafb;
-  padding: 10px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.05);
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  overflow-x: auto;
 }
 
-.group {
+.toolbarGroup {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-right: 12px;
-  border-right: 1px solid #e5e7eb;
 }
 
-.group:last-child {
-  border-right: none;
+.selectWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 6px 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #475569;
+  flex-shrink: 0;
 }
 
-.button {
+.selectLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 26px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.toolButton {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 34px;
   height: 34px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #444;
+  color: #1f2937;
+  flex-shrink: 0;
 }
 
-.button:hover {
-  background: #f3f4f6;
-  border-color: #c3c7d0;
+.toolButton:hover {
+  background: #f2f5f9;
+  color: #0f172a;
 }
 
-.button:disabled {
+.toolButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 .active {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 2px 8px rgba(100, 100, 255, 0.3);
+  background: #eff3f8;
+  color: #111827;
 }
 
 .select {
   appearance: none;
-  border: 1px solid #d1d5db;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 0 10px;
+  height: 26px;
+  min-width: 58px;
   border-radius: 8px;
-  background: #fff;
-  padding: 0.25rem 0.5rem;
-  font-size: 14px;
-  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
   cursor: pointer;
-  transition: border 0.2s ease;
+  flex-shrink: 0;
 }
 
 .select:hover {
-  border-color: #6366f1;
+  border-color: #cbd5e1;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.12);
 }
 
 .select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.toolbarActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  flex-shrink: 0;
+}
+
+.saveButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.saveButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.saveButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.shareButtonWrap {
+  display: inline-flex;
+  align-items: center;
 }
 
 .editorContent {
@@ -245,6 +319,19 @@
   box-shadow: 0 0 0 5px rgba(148, 163, 184, 0.12);
 }
 
+.readOnlyBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f4f7fb;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .modal {
   width: 540px;
   background: white;
@@ -371,4 +458,13 @@
 
 .editorContent a:hover {
   color: #3730a3;
+}
+
+@media (max-width: 768px) {
+  .activityToast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: none;
+  }
 }

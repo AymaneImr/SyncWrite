@@ -71,6 +71,7 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
       <DialogTrigger asChild>
         <button className={styles.shareButton}>
           <Share2 size={18} />
+          <span>Share</span>
         </button>
       </DialogTrigger>
 

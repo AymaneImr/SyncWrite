@@ -169,17 +169,24 @@
 }
 
 .shareButton {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: transparent;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  background: #17152b;
   border: none;
+  border-radius: 14px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  color: #444;
-  padding: 0 10px;
+  color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
 }
 
 .shareButton:hover {
-  color: #111;
+  background: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.22);
 }

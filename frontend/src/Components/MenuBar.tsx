@@ -4,19 +4,20 @@ import styles from "../css/TextEditor.module.css";
 import type { Editor } from "@tiptap/react";
 import { useEditorState } from "@tiptap/react";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Strikethrough,
+  ChevronDown,
   Code,
-  Type,
   List,
   ListOrdered,
-  Quote,
+  Italic,
   Undo,
   Redo,
-  Minus,
   Trash2,
   Save,
+  Strikethrough,
 } from "lucide-react";
 
 type MenuBarProps = {
@@ -82,10 +83,9 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
 
   return (
     <div className={styles.toolbar}>
-
-      <div className={styles.group}>
+      <div className={styles.toolbarGroup}>
         <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit || !state.canUndo}
           onClick={() => editor.chain().focus().undo().run()}
           title="Undo"
@@ -93,7 +93,7 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Undo size={18} />
         </button>
         <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit || !state.canRedo}
           onClick={() => editor.chain().focus().redo().run()}
           title="Redo"
@@ -101,9 +101,12 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Redo size={18} />
         </button>
       </div>
-      <div className={styles.group}>
+
+      <div className={styles.toolbarDivider} />
+
+      <div className={styles.toolbarGroup}>
         <button
-          className={`${styles.button} ${state.isBold ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isBold ? styles.active : ""}`}
           disabled={!canEdit || !state.canBold}
           onClick={() => editor.chain().focus().toggleBold().run()}
           title="Bold"
@@ -111,7 +114,7 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Bold size={18} />
         </button>
         <button
-          className={`${styles.button} ${state.isItalic ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isItalic ? styles.active : ""}`}
           disabled={!canEdit || !state.canItalic}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           title="Italic"
@@ -119,7 +122,7 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Italic size={18} />
         </button>
         <button
-          className={`${styles.button} ${state.isStrike ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isStrike ? styles.active : ""}`}
           disabled={!canEdit || !state.canStrike}
           onClick={() => editor.chain().focus().toggleStrike().run()}
           title="Strike"
@@ -127,7 +130,7 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Strikethrough size={18} />
         </button>
         <button
-          className={`${styles.button} ${state.isCode ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isCode ? styles.active : ""}`}
           disabled={!canEdit || !state.canCode}
           onClick={() => editor.chain().focus().toggleCode().run()}
           title="Inline code"
@@ -136,9 +139,11 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
         </button>
       </div>
 
-      <div className={styles.group}>
+      <div className={styles.toolbarDivider} />
+
+      <div className={styles.toolbarGroup}>
         <button
-          className={`${styles.button} ${state.isBulletList ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isBulletList ? styles.active : ""}`}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           title="Bullet list"
@@ -146,64 +151,90 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <List size={18} />
         </button>
         <button
-          className={`${styles.button} ${state.isOrderedList ? styles.active : ""}`}
+          className={`${styles.toolButton} ${state.isOrderedList ? styles.active : ""}`}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           title="Ordered list"
         >
           <ListOrdered size={18} />
         </button>
-        <button
-          className={`${styles.button} ${state.isBlockquote ? styles.active : ""}`}
-          disabled={!canEdit}
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          title="Blockquote"
-        >
-          <Quote size={18} />
-        </button>
-        <button
-          className={`${styles.button} ${state.isCodeBlock ? styles.active : ""}`}
-          disabled={!canEdit}
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          title="Code block"
-        >
-          <Type size={18} />
-        </button>
       </div>
 
-      <div className={styles.group}>
+      <div className={styles.toolbarDivider} />
+
+      <div className={styles.toolbarGroup}>
         <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           title="Align left"
         >
-          L
+          <AlignLeft size={18} />
         </button>
         <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           title="Align center"
         >
-          C
+          <AlignCenter size={18} />
         </button>
         <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           title="Align right"
         >
-          R
+          <AlignRight size={18} />
         </button>
+      </div>
 
+      <div className={styles.toolbarDivider} />
 
-        {/* TODO: implement better option styles later */}
-
-        <div className={styles.group}>
+      <div className={styles.toolbarGroup}>
+        <label className={styles.selectWrap}>
+          <span className={styles.selectLabel}>Size</span>
           <select
             className={styles.select}
             disabled={!canEdit}
+            defaultValue="16px"
+            onChange={(e) => editor.chain().focus().setMark('textStyle', { fontSize: e.target.value }).run()}
+            title="Font size"
+          >
+            <option value="12px">12</option>
+            <option value="14px">14</option>
+            <option value="16px">16</option>
+            <option value="18px">18</option>
+            <option value="24px">24</option>
+          </select>
+        </label>
+
+        <label className={styles.selectWrap}>
+          <span className={styles.selectLabel}>Color</span>
+          <select
+            className={styles.select}
+            disabled={!canEdit}
+            defaultValue="#0f172a"
+            onChange={(e) =>
+              editor.chain().focus().setColor(e.target.value).run()
+            }
+            title="Text color"
+          >
+            <option value="#0f172a">Default</option>
+            <option value="#dc2626">Red</option>
+            <option value="#2563eb">Blue</option>
+            <option value="#16a34a">Green</option>
+            <option value="#9333ea">Purple</option>
+            <option value="#ea580c">Orange</option>
+          </select>
+        </label>
+
+        <label className={styles.selectWrap}>
+          <span className={styles.selectLabel}>Highlight</span>
+          <select
+            className={styles.select}
+            disabled={!canEdit}
+            defaultValue="yellow"
             onChange={(e) =>
               editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
             }
@@ -214,33 +245,10 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
             <option value="pink">Pink</option>
             <option value="cyan">Cyan</option>
           </select>
-        </div>
+        </label>
 
-
-        <select
-          className={styles.select}
-          disabled={!canEdit}
-          onChange={(e) => editor.chain().focus().setMark('textStyle', { fontSize: e.target.value }).run()}
-        >
-          <option value="12px">12</option>
-          <option value="14px">14</option>
-          <option value="16px">16</option>
-          <option value="18px">18</option>
-          <option value="24px">24</option>
-        </select>
-      </div>
-
-      <div className={styles.group}>
         <button
-          className={styles.button}
-          disabled={!canEdit}
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          title="Horizontal line"
-        >
-          <Minus size={18} />
-        </button>
-        <button
-          className={styles.button}
+          className={styles.toolButton}
           disabled={!canEdit}
           onClick={() => editor.chain().focus().unsetAllMarks().run()}
           title="Clear formatting"
@@ -248,22 +256,25 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
           <Trash2 size={18} />
         </button>
       </div>
-      <div className={styles.group}>
+
+      <div className={styles.toolbarActions}>
+        {!canEdit && <div className={styles.readOnlyBadge}>View only</div>}
+
         <button
-          className={styles.button}
+          className={styles.saveButton}
           disabled={!canEdit}
           onClick={handleSave}
           title="Save document"
         >
           <Save size={18} />
+          <span>Save</span>
+          <ChevronDown size={16} />
         </button>
 
-        <div className={styles.button}>
-          <ShareDialog id={id} token={token} link={link} />
+        <div className={styles.shareButtonWrap}>
+          <ShareDialog id={id} token={token} link={link ?? ""} />
         </div>
       </div>
-
-
     </div>
   );
 }
