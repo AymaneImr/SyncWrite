@@ -11,7 +11,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import styles from "../css/TextEditor.module.css";
 import { useEffect, useState } from "react";
-import OnlineEditors, { type OnlineUser } from "./OnlineEditors";
+import OnlineEditors, { useCollaborators, type OnlineUser } from "./OnlineEditors";
 import MenuBar from "./MenuBar";
 import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -85,6 +85,13 @@ export default function TextEditor() {
 
   // get the document_id from the url
   const { link } = useParams<{ link?: string }>();
+  const collaborators = useCollaborators(id, token);
+  const currentUser = getCurrentUser();
+  const isOwner = currentUser?.user_id === doc?.owner_id;
+  const currentCollaborator = collaborators.find(
+    (entry) => entry.user_id === currentUser?.user_id
+  );
+  const canEdit = isOwner || currentCollaborator?.permission === "read-write";
 
   // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
@@ -122,11 +129,6 @@ export default function TextEditor() {
 
     load()
   }, [token, link]);
-
-  // get the current user 
-  const currentUser = getCurrentUser();
-  const isOwner = currentUser?.user_id === doc?.owner_id;
-
   const pushActivityToast = (message: string, accent: string) => {
     if (activityTimerRef.current) {
       window.clearTimeout(activityTimerRef.current);
@@ -161,8 +163,10 @@ export default function TextEditor() {
   const editor = useEditor({
     extensions,
     content: doc?.Content,
+    editable: canEdit,
     // HANDLER: local edits -> throttle -> update local content and broadcast over WS
     onUpdate: ({ editor }) => {
+      if (!canEdit) return;
       if (isApplyingRemoteRef.current) return;
 
       const now = Date.now();
@@ -190,6 +194,11 @@ export default function TextEditor() {
       }
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(canEdit);
+  }, [editor, canEdit]);
 
   if (!currentUser) {
     return <div>Loading...</div>;
@@ -391,6 +400,7 @@ export default function TextEditor() {
           id={id}
           token={token}
           link={link}
+          canEdit={canEdit}
           onSave={() => broadcastPresenceEvent("save")}
         />
       </div>
@@ -402,7 +412,10 @@ export default function TextEditor() {
           style={{ position: "relative" }}
           ref={editorContainerRef}
         >
-          <EditorContent editor={editor} className={styles.editorContent} />
+          <EditorContent
+            editor={editor}
+            className={`${styles.editorContent} ${!canEdit ? styles.readOnlyEditor : ""}`}
+          />
           <RemoteSelections
             selections={remoteSelections}
             editor={editor}
@@ -417,6 +430,7 @@ export default function TextEditor() {
           setOnlineUsers={setOnlineUsers}
           ownerId={doc?.owner_id}
           currentUserId={currentUser.user_id}
+          collaborators={collaborators}
         />
       </div>
 

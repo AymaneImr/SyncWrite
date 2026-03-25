@@ -109,6 +109,11 @@
   border-color: #6366f1;
 }
 
+.select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .editorContent {
   min-height: 1000px;
   max-width: 850px;
@@ -127,6 +132,14 @@
 .editorContent:focus-within {
   border-color: #6366f1;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.readOnlyEditor {
+  background: #f8fafc;
+}
+
+.readOnlyEditor :global(.ProseMirror) {
+  cursor: default;
 }
 
 .editorContent p {

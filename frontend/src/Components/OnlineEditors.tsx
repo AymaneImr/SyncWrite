@@ -28,9 +28,38 @@ interface Props {
   refreshCollaborators: number,
   ownerId?: string,
   currentUserId?: number;
+  collaborators: Collaborators[],
 }
 
-const green = "green";
+export function useCollaborators(id?: string, token?: string | null) {
+  const [collaborators, setCollaborators] = useState<Collaborators[]>([]);
+
+  useEffect(() => {
+    if (!id || !token) return;
+
+    const load = async () => {
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/collaborators`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.log("err collaborators:", err);
+        return;
+      }
+
+      const data = await res.json();
+      setCollaborators(data.collaborators ?? []);
+    };
+
+    load();
+  }, [id, token]);
+
+  return collaborators;
+}
 
 export default function OnlineEditors({
   id,
@@ -39,9 +68,9 @@ export default function OnlineEditors({
   setOnlineUsers,
   ownerId,
   currentUserId,
+  collaborators,
 }: Props) {
 
-  const [collaborators, setCollaborators] = useState<Collaborators[]>([])
 
   // EFFECT (API): fetch online collaborators for the document
   useEffect(() => {

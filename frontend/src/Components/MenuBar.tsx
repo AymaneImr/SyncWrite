@@ -1,3 +1,4 @@
+
 import ShareDialog from "./ShareButton";
 import styles from "../css/TextEditor.module.css";
 import type { Editor } from "@tiptap/react";
@@ -23,10 +24,12 @@ type MenuBarProps = {
   id?: string;
   token: string | null;
   link: string | undefined;
+  canEdit: boolean;
   onSave?: () => void;
 };
 
-export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProps) {
+export default function MenuBar({ editor, id, token, link, canEdit, onSave }: MenuBarProps) {
+
   if (!editor) return null;
 
   const state = useEditorState({
@@ -50,6 +53,8 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
   });
 
   const handleSave = () => {
+    if (!canEdit) return;
+
     const content_js = editor.getJSON();
     const saveContent = async () => {
       const res = await fetch(`http://localhost:8080/api/documents/${id}/updateContent`, {
@@ -66,6 +71,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       if (!res.ok) {
         const err = await res.text();
         console.log("err: ", err);
+        return;
       }
 
       onSave?.();
@@ -80,7 +86,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={styles.button}
-          disabled={!state.canUndo}
+          disabled={!canEdit || !state.canUndo}
           onClick={() => editor.chain().focus().undo().run()}
           title="Undo"
         >
@@ -88,7 +94,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={styles.button}
-          disabled={!state.canRedo}
+          disabled={!canEdit || !state.canRedo}
           onClick={() => editor.chain().focus().redo().run()}
           title="Redo"
         >
@@ -98,7 +104,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={`${styles.button} ${state.isBold ? styles.active : ""}`}
-          disabled={!state.canBold}
+          disabled={!canEdit || !state.canBold}
           onClick={() => editor.chain().focus().toggleBold().run()}
           title="Bold"
         >
@@ -106,7 +112,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isItalic ? styles.active : ""}`}
-          disabled={!state.canItalic}
+          disabled={!canEdit || !state.canItalic}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           title="Italic"
         >
@@ -114,7 +120,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isStrike ? styles.active : ""}`}
-          disabled={!state.canStrike}
+          disabled={!canEdit || !state.canStrike}
           onClick={() => editor.chain().focus().toggleStrike().run()}
           title="Strike"
         >
@@ -122,7 +128,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isCode ? styles.active : ""}`}
-          disabled={!state.canCode}
+          disabled={!canEdit || !state.canCode}
           onClick={() => editor.chain().focus().toggleCode().run()}
           title="Inline code"
         >
@@ -133,6 +139,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={`${styles.button} ${state.isBulletList ? styles.active : ""}`}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           title="Bullet list"
         >
@@ -140,6 +147,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isOrderedList ? styles.active : ""}`}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           title="Ordered list"
         >
@@ -147,6 +155,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isBlockquote ? styles.active : ""}`}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           title="Blockquote"
         >
@@ -154,6 +163,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={`${styles.button} ${state.isCodeBlock ? styles.active : ""}`}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           title="Code block"
         >
@@ -164,6 +174,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           title="Align left"
         >
@@ -171,6 +182,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           title="Align center"
         >
@@ -178,6 +190,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           title="Align right"
         >
@@ -190,6 +203,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         <div className={styles.group}>
           <select
             className={styles.select}
+            disabled={!canEdit}
             onChange={(e) =>
               editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
             }
@@ -205,6 +219,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
 
         <select
           className={styles.select}
+          disabled={!canEdit}
           onChange={(e) => editor.chain().focus().setMark('textStyle', { fontSize: e.target.value }).run()}
         >
           <option value="12px">12</option>
@@ -218,6 +233,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           title="Horizontal line"
         >
@@ -225,6 +241,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
         </button>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={() => editor.chain().focus().unsetAllMarks().run()}
           title="Clear formatting"
         >
@@ -234,6 +251,7 @@ export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProp
       <div className={styles.group}>
         <button
           className={styles.button}
+          disabled={!canEdit}
           onClick={handleSave}
           title="Save document"
         >
