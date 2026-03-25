@@ -31,6 +31,7 @@
 }
 
 .userRow {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,7 +56,7 @@
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  border: 3px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,4 +122,108 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
+}
+
+.rowActions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.menuWrap {
+  position: relative;
+}
+
+.menuButton {
+  width: 34px;
+  height: 34px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.userRow:hover .menuButton,
+.menuButtonVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.menuButton:hover {
+  color: #334155;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 210px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+  overflow: hidden;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+}
+
+.menuSectionLabel {
+  padding: 16px 18px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.menuItem {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  color: #1f2937;
+  font-size: 0.98rem;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.menuItem:hover {
+  background: #f8fafc;
+}
+
+.menuItemLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menuSelectionDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.menuDivider {
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.menuItemDanger {
+  color: #dc2626;
+}
+
+.menuItemDanger:hover {
+  background: rgba(220, 38, 38, 0.08);
 }
