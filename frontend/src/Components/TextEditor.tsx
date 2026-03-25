@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+
+import { useRef } from "react";
 import { FileText, LogOut } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
@@ -16,8 +17,12 @@ import { useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { updatedAgo, type DocumentItem } from "./ExistingDocuments";
 import RemoteSelections from "./RemoteSelections";
-import { press } from "framer-motion";
 
+type ActivityToast = {
+  id: number;
+  message: string;
+  accent: string;
+};
 
 // TipTap editor feature set used by the MenuBar + editor surface
 const extensions = [TextStyleKit, StarterKit.configure({
@@ -53,18 +58,22 @@ export default function TextEditor() {
   // UI and collaboration state
   const [doc, setDoc] = useState<DocumentItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [content, setContent] = useState<any>(null)
   const [id, setId] = useState("")
   const [showEndSessionModal, SetshowEndSessionModal] = useState(false)
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
+  const [activityToast, setActivityToast] = useState<ActivityToast | null>(null);
+  const activityTimerRef = useRef<number | null>(null);
 
   // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
   const lastContentSentRef = useRef<number>(0);
+  const lastEditingSentRef = useRef<number>(0);
   const isApplyingRemoteRef = useRef<boolean>(false);
   const CURSOR_THROTTLE_MS = 80;
   const CONTENT_THROTTLE_MS = 120;
+  const EDITING_ACTIVITY_THROTTLE_MS = 2000;
+  const ACTIVITY_TOAST_MS = 3000;
 
   // Remote cursor/selection overlays, keyed by user id
   const [remoteSelections, setRemoteSelections] = useState<
@@ -118,6 +127,37 @@ export default function TextEditor() {
   const currentUser = getCurrentUser();
   const isOwner = currentUser?.user_id === doc?.owner_id;
 
+  const pushActivityToast = (message: string, accent: string) => {
+    if (activityTimerRef.current) {
+      window.clearTimeout(activityTimerRef.current);
+    }
+
+    setActivityToast({
+      id: Date.now(),
+      message,
+      accent,
+    });
+
+    activityTimerRef.current = window.setTimeout(() => {
+      setActivityToast(null);
+      activityTimerRef.current = null;
+    }, ACTIVITY_TOAST_MS);
+  };
+
+  const broadcastPresenceEvent = (event: "editing" | "save") => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    socketRef.current.send(
+      JSON.stringify({
+        event,
+        user_id: currentUser?.user_id,
+        username: currentUser?.username,
+      })
+    );
+  };
+
   const editor = useEditor({
     extensions,
     content: doc?.Content,
@@ -131,8 +171,6 @@ export default function TextEditor() {
       }
 
       lastContentSentRef.current = now;
-      setContent(editor.getJSON())
-
       if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
         return;
       }
@@ -145,6 +183,11 @@ export default function TextEditor() {
           content: editor.getJSON()
         })
       );
+
+      if (now - lastEditingSentRef.current >= EDITING_ACTIVITY_THROTTLE_MS) {
+        lastEditingSentRef.current = now;
+        broadcastPresenceEvent("editing");
+      }
     },
   });
 
@@ -183,7 +226,7 @@ export default function TextEditor() {
 
         try {
           isApplyingRemoteRef.current = true;
-          editor.commands.setContent(data.content, false);
+          editor.commands.setContent(data.content);
         } finally {
           isApplyingRemoteRef.current = false;
         }
@@ -202,6 +245,10 @@ export default function TextEditor() {
             }
           ];
         });
+
+        if (data.user_id !== currentUser?.user_id) {
+          pushActivityToast(`${data.username} joined the document`, "#8b5cf6");
+        }
       }
 
       if (data.event === "user left") {
@@ -212,6 +259,18 @@ export default function TextEditor() {
         });
 
         setOnlineUsers((prev) => prev.filter((user) => user.id !== data.user_id))
+
+        if (data.user_id !== currentUser?.user_id) {
+          pushActivityToast(`${data.username} left the document`, "#ef4444");
+        }
+      }
+
+      if (data.event === "editing" && data.user_id !== currentUser?.user_id) {
+        pushActivityToast(`${data.username} is editing`, "#10b981");
+      }
+
+      if (data.event === "save" && data.user_id !== currentUser?.user_id) {
+        pushActivityToast(`${data.username} saved the document`, "#2563eb");
 
       }
     };
@@ -224,6 +283,14 @@ export default function TextEditor() {
       ws.close();
     };
   }, [id, token, currentUser?.user_id, editor]);
+
+  useEffect(() => {
+    return () => {
+      if (activityTimerRef.current) {
+        window.clearTimeout(activityTimerRef.current);
+      }
+    };
+  }, []);
 
   // EFFECT: when doc content arrives, seed editor content
   useEffect(() => {
@@ -319,7 +386,13 @@ export default function TextEditor() {
 
       </div>
       <div className={styles.menuBarWrapper}>
-        <MenuBar editor={editor} id={id} token={token} link={link} />
+        <MenuBar
+          editor={editor}
+          id={id}
+          token={token}
+          link={link}
+          onSave={() => broadcastPresenceEvent("save")}
+        />
       </div>
 
       <div className={styles.contentWrapper}>
@@ -386,7 +459,16 @@ export default function TextEditor() {
           </div>
         </div>
       )}
+
+      {activityToast && (
+        <div className={styles.activityToast} key={activityToast.id}>
+          <span
+            className={styles.activityToastDot}
+            style={{ backgroundColor: activityToast.accent }}
+          />
+          <span>{activityToast.message}</span>
+        </div>
+      )}
     </div>
   );
 }
-

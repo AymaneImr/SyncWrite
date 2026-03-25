@@ -205,6 +205,33 @@
   z-index: 1000;
 }
 
+.activityToast {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.14);
+  color: #334155;
+  font-size: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.activityToastDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 5px rgba(148, 163, 184, 0.12);
+}
+
 .modal {
   width: 540px;
   background: white;

@@ -18,8 +18,15 @@ import {
   Save,
 } from "lucide-react";
 
-export default function MenuBar({ editor, id, token, link }: { editor: Editor | null, id?: string, token: string | null, link: string | undefined }) {
+type MenuBarProps = {
+  editor: Editor | null;
+  id?: string;
+  token: string | null;
+  link: string | undefined;
+  onSave?: () => void;
+};
 
+export default function MenuBar({ editor, id, token, link, onSave }: MenuBarProps) {
   if (!editor) return null;
 
   const state = useEditorState({
@@ -60,6 +67,8 @@ export default function MenuBar({ editor, id, token, link }: { editor: Editor | 
         const err = await res.text();
         console.log("err: ", err);
       }
+
+      onSave?.();
     }
 
     saveContent()
