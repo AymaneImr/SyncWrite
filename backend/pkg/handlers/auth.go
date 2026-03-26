@@ -14,8 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func CredentialsExists(username, email string, user models.User) (bool, error) {
-	result := db.Db.Where("Username = ? OR Email = ?", username, email).First(&user)
+func CredentialsExists(username, email string) (bool, error) {
+	result := db.Db.Where("Username = ? OR Email = ?", username, email).First(&models.User{})
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -29,20 +29,31 @@ func CredentialsExists(username, email string, user models.User) (bool, error) {
 
 func RegisterUser(r *gin.Context) {
 
-	var user models.User
-	err := r.BindJSON(&user)
+	var req struct {
+		Username        string `json:"username"`
+		Email           string `json:"email"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirmPassword"`
+	}
+
+	err := r.BindJSON(&req)
 
 	if err != nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	if user.Username == "" || user.Email == "" || user.Password == "" {
-		r.JSON(http.StatusNotFound, gin.H{"error": "Missing fields"})
+	if req.Username == " " || req.Email == " " || req.Password == " " || req.ConfirmPassword == " " {
+		r.JSON(http.StatusBadRequest, gin.H{"error": "Missing fields"})
 		return
 	}
 
-	exists, err := CredentialsExists(user.Username, user.Email, user)
+	if req.Password != req.ConfirmPassword {
+		r.JSON(http.StatusBadRequest, gin.H{"error": "Passwords dont match"})
+		return
+	}
+
+	exists, err := CredentialsExists(req.Username, req.Email)
 	if exists {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Username Or Email already exists"})
 		return
@@ -53,40 +64,49 @@ func RegisterUser(r *gin.Context) {
 		return
 	}
 
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashed_password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't hash password"})
 		return
 	}
 
-	user = models.User{
-		Username: user.Username,
-		Email:    user.Email,
+	user := models.User{
+		Username: req.Username,
+		Email:    req.Email,
 		Password: string(hashed_password),
+		IsActive: false,
 	}
 
-	_ = db.Db.Create(&user)
+	if err := db.Db.Create(&user).Error; err != nil {
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		return
+	}
 
 	r.JSON(http.StatusCreated, gin.H{"info": "User registered successfully"})
 }
 
 func Login(r *gin.Context) {
-	var user models.User
-	err := r.BindJSON(&user)
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := r.BindJSON(&req)
 
 	if err != nil {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	if user.Username == " " || user.Password == " " {
+	if req.Email == "" || req.Password == "" {
 		r.JSON(http.StatusNotFound, gin.H{"error": "Missing fields"})
 		return
 	}
 
 	var db_user models.User
-	result := db.Db.Where("Email = ? ", user.Email).First(&db_user)
+	result := db.Db.Where("Email = ? ", req.Email).First(&db_user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			r.JSON(http.StatusNotFound, gin.H{"error": "User with this this username doesn't exist"})
@@ -98,10 +118,9 @@ func Login(r *gin.Context) {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(db_user.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(db_user.Password), []byte(req.Password))
 	if err != nil {
 		r.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong password"})
-
 		return
 	}
 
@@ -130,9 +149,9 @@ func Login(r *gin.Context) {
 		"access_token":  access,
 		"refresh_token": refresh,
 		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
+			"id":       db_user.ID,
+			"username": db_user.Username,
+			"email":    db_user.Email,
 		},
 	})
 }
@@ -157,7 +176,6 @@ func ChnagePassword(r *gin.Context) {
 			return
 		}
 
-		println("Database error details:", result.Error.Error())
 		r.JSON(http.StatusNotFound, gin.H{"error": "Database error"})
 		return
 	}
