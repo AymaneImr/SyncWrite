@@ -14,7 +14,7 @@
 * Search and filtering for documents
 * Rich text editor (formatting, lists, colors, alignment, etc.)
 * Real-time collaboration using WebSockets
-* Live presence with remote selections
+* Live presence with remote selections and cursors
 * Document sharing via links and invites
 * Role-based access control (viewer / editor)
 * Collaboration session management (join, leave, activity tracking)
