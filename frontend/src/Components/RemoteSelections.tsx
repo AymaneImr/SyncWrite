@@ -9,8 +9,15 @@ type RemoteSelection = {
   username: string;
 };
 
+type RemotePointer = {
+  x: number;
+  y: number;
+  username: string;
+};
+
 type RemoteSelectionsProps = {
   selections: Record<number, RemoteSelection>;
+  pointers: Record<number, RemotePointer>;
   editor: Editor | null;
   editorContainerRef: React.RefObject<HTMLDivElement | null>;
 };
@@ -18,6 +25,7 @@ type RemoteSelectionsProps = {
 // RENDER: draw remote cursors and selection ranges as overlays
 export default function RemoteSelections({
   selections,
+  pointers,
   editor,
   editorContainerRef,
 }: RemoteSelectionsProps) {
@@ -98,36 +106,74 @@ export default function RemoteSelections({
               />
             )}
 
-            {!isCursor && (
-              <>
-                {rects.map((rect, index) => (
-                  <div
-                    key={`${userId}-${index}`}
-                    style={{
-                      width: `${Math.min(320, rect.width)}px`,
-                      height: `${Math.min(24, rect.height)}px`,
-                      left: `${rect.left - left}px`,
-                      top: `${rect.top - top}px`,
-                      position: "absolute",
-                      background: theme.soft,
-                      borderRadius: "4px",
-                    }}
-                  />
-                ))}
-              </>
-            )}
+            {rects.map((rect, index) => (
+              <div
+                key={`${userId}-${index}`}
+                style={{
+                  width: `${Math.min(320, rect.width)}px`,
+                  height: `${Math.min(24, rect.height)}px`,
+                  left: `${rect.left - left}px`,
+                  top: `${rect.top - top}px`,
+                  position: "absolute",
+                  background: theme.soft,
+                  borderRadius: "4px",
+                }}
+              />
+            ))}
 
+          </div>
+        );
+      })}
+
+      {Object.entries(pointers).map(([userId, pointer]) => {
+        const theme = getCollaboratorTheme(Number(userId));
+
+        return (
+          <div
+            key={`pointer-${userId}`}
+            style={{
+              position: "absolute",
+              left: `${pointer.x}px`,
+              top: `${pointer.y}px`,
+              pointerEvents: "none",
+              zIndex: 30,
+              transform: "translate(-2px, -2px)",
+            }}
+          >
+            <svg
+              width="22"
+              height="28"
+              viewBox="0 0 22 28"
+              style={{
+                display: "block",
+                overflow: "visible",
+                filter: "drop-shadow(0 4px 8px rgba(15, 23, 42, 0.22))",
+              }}
+            >
+              <path
+                d="M3 2L3 21L8.3 16.4L11.6 24L15.2 22.3L11.9 14.8L19 14.2L3 2Z"
+                fill={theme.cursor}
+                stroke="#ffffff"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
             <div
               style={{
+                display: "inline-flex",
+                alignItems: "center",
+                marginTop: "-1px",
+                marginLeft: "10px",
                 fontSize: "10px",
                 background: theme.labelBg,
                 color: "#fff",
-                padding: "2px 4px",
-                borderRadius: "4px",
-                marginTop: "2px",
+                padding: "3px 6px",
+                borderRadius: "999px",
+                whiteSpace: "nowrap",
+                boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
               }}
             >
-              {sel.username}
+              {pointer.username}
             </div>
           </div>
         );

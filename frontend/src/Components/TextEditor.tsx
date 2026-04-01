@@ -25,6 +25,13 @@ type ActivityToast = {
   accent: string;
 };
 
+type RemotePointerState = {
+  x: number;
+  y: number;
+  username: string;
+  updatedAt: number;
+};
+
 // TipTap editor feature set used by the MenuBar + editor surface
 const extensions = [TextStyleKit, Color, StarterKit.configure({
   bulletList: false,
@@ -68,18 +75,22 @@ export default function TextEditor() {
 
   // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
+  const lastMouseSentRef = useRef<number>(0);
   const lastContentSentRef = useRef<number>(0);
   const lastEditingSentRef = useRef<number>(0);
   const isApplyingRemoteRef = useRef<boolean>(false);
   const CURSOR_THROTTLE_MS = 80;
+  const MOUSE_THROTTLE_MS = 40;
   const CONTENT_THROTTLE_MS = 120;
   const EDITING_ACTIVITY_THROTTLE_MS = 2000;
   const ACTIVITY_TOAST_MS = 3000;
+  const POINTER_TTL_MS = 6000;
 
   // Remote cursor/selection overlays, keyed by user id
   const [remoteSelections, setRemoteSelections] = useState<
     Record<number, { from: number; to: number; username: string }>
   >({});
+  const [remotePointers, setRemotePointers] = useState<Record<number, RemotePointerState>>({});
 
   // Active WebSocket connection for live collaboration
   const socketRef = useRef<WebSocket | null>(null);
@@ -157,6 +168,29 @@ export default function TextEditor() {
         event,
         user_id: currentUser?.user_id,
         username: currentUser?.username,
+      })
+    );
+  };
+
+  const broadcastMouseEvent = (event: "mouse_move" | "mouse_leave", x?: number, y?: number) => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    const normalizedX = typeof x === "number" ? Math.round(x) : undefined;
+    const normalizedY = typeof y === "number" ? Math.round(y) : undefined;
+
+    socketRef.current.send(
+      JSON.stringify({
+        event,
+        user_id: currentUser?.user_id,
+        username: currentUser?.username,
+        x: normalizedX,
+        y: normalizedY,
+        // Backward-compatible fallback for older backend processes that only
+        // rebroadcast the existing numeric fields.
+        from: normalizedX,
+        to: normalizedY,
       })
     );
   };
@@ -242,6 +276,34 @@ export default function TextEditor() {
         }
       }
 
+      if (data.event === "mouse_move") {
+        if (data.user_id === currentUser?.user_id) return;
+
+        const pointerX = typeof data.x === "number" ? data.x : data.from;
+        const pointerY = typeof data.y === "number" ? data.y : data.to;
+        if (typeof pointerX !== "number" || typeof pointerY !== "number") return;
+
+        setRemotePointers((prev) => ({
+          ...prev,
+          [data.user_id]: {
+            x: pointerX,
+            y: pointerY,
+            username: data.username,
+            updatedAt: Date.now(),
+          },
+        }));
+      }
+
+      if (data.event === "mouse_leave") {
+        if (data.user_id === currentUser?.user_id) return;
+
+        setRemotePointers((prev) => {
+          const next = { ...prev };
+          delete next[data.user_id];
+          return next;
+        });
+      }
+
       if (data.event === "user joined") {
         setOnlineUsers((prev) => {
           const exists = prev.some((user) => user.id === data.user_id);
@@ -263,6 +325,11 @@ export default function TextEditor() {
 
       if (data.event === "user left") {
         setRemoteSelections(prev => {
+          const next = { ...prev };
+          delete next[data.user_id];
+          return next;
+        });
+        setRemotePointers((prev) => {
           const next = { ...prev };
           delete next[data.user_id];
           return next;
@@ -309,6 +376,32 @@ export default function TextEditor() {
 
   }, [editor, doc?.Content]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const cutoff = Date.now() - POINTER_TTL_MS;
+
+      setRemotePointers((prev) => {
+        let changed = false;
+        const next: Record<number, RemotePointerState> = {};
+
+        Object.entries(prev).forEach(([userId, pointer]) => {
+          if (pointer.updatedAt >= cutoff) {
+            next[Number(userId)] = pointer;
+            return;
+          }
+
+          changed = true;
+        });
+
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   // EFFECT (WS): send cursor/selection updates over WebSocket
   useEffect(() => {
     if (!editor || !socketRef.current) return
@@ -340,6 +433,37 @@ export default function TextEditor() {
     }
   }, [editor, currentUser]
   )
+
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const now = Date.now();
+      if (now - lastMouseSentRef.current < MOUSE_THROTTLE_MS) return;
+
+      lastMouseSentRef.current = now;
+
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left + container.scrollLeft;
+      const y = event.clientY - rect.top + container.scrollTop;
+
+      broadcastMouseEvent("mouse_move", x, y);
+    };
+
+    const handleMouseLeave = () => {
+      broadcastMouseEvent("mouse_leave");
+    };
+
+    container.addEventListener("mousemove", handleMouseMove);
+    container.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      broadcastMouseEvent("mouse_leave");
+      container.removeEventListener("mousemove", handleMouseMove);
+      container.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [currentUser?.user_id, currentUser?.username, id]);
 
   const handleEndSession = async () => {
     if (!id || !token) return;
@@ -419,6 +543,7 @@ export default function TextEditor() {
           />
           <RemoteSelections
             selections={remoteSelections}
+            pointers={remotePointers}
             editor={editor}
             editorContainerRef={editorContainerRef}
           />

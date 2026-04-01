@@ -7,6 +7,8 @@ type WsData struct {
 	Event   string          `json:"event"`
 	From    int             `json:"from"`
 	To      int             `json:"to"`
+	X       float64         `json:"x"`
+	Y       float64         `json:"y"`
 	Content json.RawMessage `json:"content"`
 
 	// fields injectecd by backend
