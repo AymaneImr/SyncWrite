@@ -1,0 +1,89 @@
+.body {
+  padding-top: 60px;
+}
+
+.navBar {
+  top: 0;
+  height: 70px;
+  padding: 1rem;
+  position: fixed;
+  max-height: 200px;
+  width: 100%;
+  background-color: white;
+  border-bottom: 1px solid #f2f0ff;
+  background: rgba(259, 259, 259, 0.5);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.navContainer {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  flex-wrap: wrap;
+}
+
+.logoDiv {
+  font-size: 1rem;
+  font-weight: bold;
+  color: black;
+  letter-spacing: 1px;
+}
+
+.logoLink {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo {
+  color: white;
+  padding: 0.5rem;
+  border: 1px solid #8b1be6;
+  border-radius: 12px;
+  background: linear-gradient(to right, #4a2bff, #8b1be6);
+}
+
+.navLinks {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+}
+
+.navLinks li a {
+  position: relative;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  color: oklch(0.446 0.043 257.281);
+}
+
+.navAuth {
+  display: flex;
+  justify-content: space-between;
+}
+
+.signIn {
+  padding: 0.5rem 1.5rem;
+  font-weight: 450;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  color: oklch(0.372 0.044 257.287);
+}
+
+.signUp {
+  padding: 0.5rem 1.2rem;
+  border-radius: 30px;
+  font-weight: 450;
+  font-size: 1rem;
+  background: linear-gradient(to right, #4a2bff, #8b1be6);
+  color: white;
+  border: none;
+  cursor: pointer;
+
+}
