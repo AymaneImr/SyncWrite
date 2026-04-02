@@ -10,7 +10,7 @@
 ## Core Features
 
 * JWT-based authentication with protected routes
-* Document management (create, open, delete, personal library)
+* Document management (create, open, upload, delete, personal library)
 * Search and filtering for documents
 * Rich text editor (formatting, lists, colors, alignment, etc.)
 * Real-time collaboration using WebSockets
@@ -31,7 +31,7 @@ This is the fastest way — no manual setup needed.
 ```bash
 git clone https://github.com/AymaneImr/SyncWrite.git
 cd SyncWrite
-docker compose up --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 ---
