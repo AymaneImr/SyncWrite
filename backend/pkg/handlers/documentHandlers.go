@@ -17,7 +17,8 @@ func CreateDocument(r *gin.Context) {
 	user_id := r.GetUint("user_id")
 
 	var body struct {
-		Title string `json:"title"`
+		Title   string          `json:"title"`
+		Content json.RawMessage `json:"content"`
 	}
 
 	if err := r.BindJSON(&body); err != nil {
@@ -25,22 +26,28 @@ func CreateDocument(r *gin.Context) {
 		return
 	}
 
-	if body.Title == " " {
+	if body.Title == " " || body.Title == "" {
 		body.Title = "Untitled"
 	}
 
 	link := utils.GenerateDocumentLink()
+	now := time.Now().Unix()
 
 	document := models.Document{
 		OwnerID:   user_id,
 		Title:     body.Title,
-		Content:   nil,
+		Content:   body.Content,
 		Link:      link,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: now,
 	}
 
 	if err := db.Db.Create(&document).Error; err != nil {
 		r.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create document"})
+		return
+	}
+
+	if _, err := StartDocumentSession(document.ID, user_id); err != nil {
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Document created but session could not be started"})
 		return
 	}
 
@@ -89,6 +96,11 @@ func LoadDocumentByLink(r *gin.Context) {
 	var doc models.Document
 	if err := db.Db.Where("link = ?", link).First(&doc).Error; err != nil {
 		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	if !utils.HasDocumentAccess(user_id, doc.ID) {
+		r.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this document"})
 		return
 	}
 

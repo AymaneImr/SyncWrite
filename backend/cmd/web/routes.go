@@ -23,14 +23,14 @@ func RegisterRoutes(r *gin.Engine) {
 	docs := r.Group("api/documents")
 	docs.Use(utils.Auth())
 	{
-		docs.POST("/create", handlers.CreateDocument)                                         // works
-		docs.GET(":id/load", utils.DocumentAccess(), handlers.LoadDocument)                   // works
-		docs.GET("/link/:link/load", utils.DocumentAccessLink(), handlers.LoadDocumentByLink) // works
-		docs.GET("/loadAll", handlers.LoadDocuments)                                          // wORKS
-		docs.GET("/link/:link/open", utils.Auth(), handlers.OpenByLink)                       // works
-		docs.PUT("/:id/updateTitle", utils.DocumentAccess(), handlers.UpdateTitle)            // works
-		docs.PUT("/:id/updateContent", utils.DocumentAccess(), handlers.UpdateContent)        // works
-		docs.DELETE("/:id/delete", utils.DocumentAccess(), handlers.DeleteDocument)           // works
+		docs.POST("/create", handlers.CreateDocument)                                  // works
+		docs.GET(":id/load", utils.DocumentAccess(), handlers.LoadDocument)            // works
+		docs.GET("/link/:link/load", handlers.LoadDocumentByLink)                      // works
+		docs.GET("/loadAll", handlers.LoadDocuments)                                   // wORKS
+		docs.GET("/link/:link/open", utils.Auth(), handlers.OpenByLink)                // works
+		docs.PUT("/:id/updateTitle", utils.DocumentAccess(), handlers.UpdateTitle)     // works
+		docs.PUT("/:id/updateContent", utils.DocumentAccess(), handlers.UpdateContent) // works
+		docs.DELETE("/:id/delete", utils.DocumentAccess(), handlers.DeleteDocument)    // works
 
 		//docs.PUT("/:id/session/start", utils.DocumentAccess(), handlers.StartDocumentSession)
 		docs.PUT("/:id/session/end", utils.DocumentAccess(), handlers.EndDocumentSession)

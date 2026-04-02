@@ -208,6 +208,8 @@ func OpenByLink(r *gin.Context) {
 				"access_level": "owner",
 			},
 		)
+		return
+
 	}
 
 	var collaborator models.DocumentCollaborator
