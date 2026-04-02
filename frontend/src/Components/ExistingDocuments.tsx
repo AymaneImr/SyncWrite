@@ -24,7 +24,7 @@ export type DocumentItem = {
   id: string;
   owner_id: string;
   title: string;
-  Content: string;
+  Content: unknown;
   description: string;
   created_at: string;
   updated_at: string;

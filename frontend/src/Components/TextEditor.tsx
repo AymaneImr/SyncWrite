@@ -32,6 +32,17 @@ type RemotePointerState = {
   updatedAt: number;
 };
 
+type TipTapNode = {
+  type: string;
+  text?: string;
+  content?: TipTapNode[];
+};
+
+type TipTapDocument = {
+  type: "doc";
+  content: TipTapNode[];
+};
+
 // TipTap editor feature set used by the MenuBar + editor surface
 const extensions = [TextStyleKit, Color, StarterKit.configure({
   bulletList: false,
@@ -60,6 +71,99 @@ function getCurrentUser(): DecodedToken | null {
   } catch {
     return null;
   }
+}
+
+function textToTipTapDocument(text: string): TipTapDocument {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+
+  if (!normalized) {
+    return {
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    };
+  }
+
+  return {
+    type: "doc",
+    content: normalized.split(/\n{2,}/).map((paragraph) => {
+      const lines = paragraph.split("\n");
+      const content: TipTapNode[] = [];
+
+      lines.forEach((line, index) => {
+        if (line.length > 0) {
+          content.push({
+            type: "text",
+            text: line,
+          });
+        }
+
+        if (index < lines.length - 1) {
+          content.push({ type: "hardBreak" });
+        }
+      });
+
+      return {
+        type: "paragraph",
+        content: content.length > 0 ? content : undefined,
+      };
+    }),
+  };
+}
+
+function isTipTapNode(value: unknown): value is TipTapNode {
+  if (!value || typeof value !== "object") return false;
+
+  const node = value as TipTapNode;
+  if (typeof node.type !== "string") return false;
+
+  if (node.text !== undefined && typeof node.text !== "string") {
+    return false;
+  }
+
+  if (node.content !== undefined) {
+    if (!Array.isArray(node.content)) return false;
+    if (!node.content.every(isTipTapNode)) return false;
+  }
+
+  return true;
+}
+
+function isTipTapDocument(value: unknown): value is TipTapDocument {
+  if (!value || typeof value !== "object") return false;
+
+  const doc = value as TipTapDocument;
+  return doc.type === "doc" && Array.isArray(doc.content) && doc.content.every(isTipTapNode);
+}
+
+function normalizeEditorContent(content: unknown): TipTapDocument {
+  if (!content) {
+    return textToTipTapDocument("");
+  }
+
+  if (typeof content === "string") {
+    const trimmed = content.trim();
+
+    if (!trimmed) {
+      return textToTipTapDocument("");
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return normalizeEditorContent(parsed);
+    } catch {
+      return textToTipTapDocument(content);
+    }
+  }
+
+  if (isTipTapDocument(content)) {
+    return content;
+  }
+
+  if (typeof content === "object") {
+    return textToTipTapDocument(JSON.stringify(content));
+  }
+
+  return textToTipTapDocument(String(content));
 }
 
 export default function TextEditor() {
@@ -104,6 +208,7 @@ export default function TextEditor() {
     (entry) => entry.user_id === currentUser?.user_id
   );
   const canEdit = isOwner || currentCollaborator?.permission === "read-write";
+  const normalizedDocContent = normalizeEditorContent(doc?.Content);
 
   // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
@@ -197,7 +302,7 @@ export default function TextEditor() {
 
   const editor = useEditor({
     extensions,
-    content: doc?.Content,
+    content: normalizedDocContent,
     editable: canEdit,
     // HANDLER: local edits -> throttle -> update local content and broadcast over WS
     onUpdate: ({ editor }) => {
@@ -228,7 +333,7 @@ export default function TextEditor() {
         broadcastPresenceEvent("editing");
       }
     },
-  });
+  }, [doc?.id, JSON.stringify(normalizedDocContent)]);
 
   useEffect(() => {
     if (!editor) return;
@@ -371,10 +476,10 @@ export default function TextEditor() {
 
   // EFFECT: when doc content arrives, seed editor content
   useEffect(() => {
-    if (!editor || !doc?.Content) return;
-    editor.commands.setContent(doc.Content);
+    if (!editor) return;
+    editor.commands.setContent(normalizedDocContent);
 
-  }, [editor, doc?.Content]);
+  }, [editor, normalizedDocContent]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
