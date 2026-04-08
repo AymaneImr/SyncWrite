@@ -2,6 +2,7 @@
 import { useRef } from "react";
 import { FileText, LogOut } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
+import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import { EditorContent, useEditor } from "@tiptap/react";
 import BulletList from "@tiptap/extension-bullet-list";
@@ -44,7 +45,7 @@ type TipTapDocument = {
 };
 
 // TipTap editor feature set used by the MenuBar + editor surface
-const extensions = [TextStyleKit, Color, StarterKit.configure({
+const extensions = [TextStyleKit, Color, Link, StarterKit.configure({
   bulletList: false,
   orderedList: false,
   listItem: false,
