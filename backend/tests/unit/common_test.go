@@ -2,18 +2,11 @@ package unit
 
 import (
 	"document_editor/pkg/utils"
+	testutils "document_editor/tests"
 	"time"
 
 	"testing"
 )
-
-type ConfigTest struct {
-	DB_URL         string
-	JWT_SECRET     string
-	REFRESH_SECRET string
-}
-
-var EnvTest *ConfigTest
 
 func TestGenerateDocumentLink(t *testing.T) {
 	result := utils.GenerateDocumentLink()
@@ -53,7 +46,7 @@ func TestGenerateSessionToken(t *testing.T) {
 // so if any changes were made inside these function this test may FAIL (i hope it doesn't)
 func TestGenerateJwtTokens(t *testing.T) {
 
-	EnvTest = &ConfigTest{
+	testutils.EnvTest = &testutils.ConfigTest{
 		JWT_SECRET:     "jwt-secret",
 		REFRESH_SECRET: "jwt-secret",
 	}
@@ -67,14 +60,14 @@ func TestGenerateJwtTokens(t *testing.T) {
 	}{
 		{
 			name:     "access token",
-			secret:   EnvTest.JWT_SECRET,
+			secret:   testutils.EnvTest.JWT_SECRET,
 			duration: 30 * time.Minute,
 			min:      29 * time.Minute,
 			max:      31 * time.Minute,
 		},
 		{
 			name:     "refrsh token",
-			secret:   EnvTest.REFRESH_SECRET,
+			secret:   testutils.EnvTest.REFRESH_SECRET,
 			duration: 30 * 24 * time.Hour,
 			min:      29 * 24 * time.Hour,
 			max:      31 * 24 * time.Hour,
@@ -96,7 +89,7 @@ func TestGenerateJwtTokens(t *testing.T) {
 				t.Fatal("expected token string, got empty string")
 			}
 
-			claims, err := utils.ParseToken(token, EnvTest.JWT_SECRET)
+			claims, err := utils.ParseToken(token, testutils.EnvTest.JWT_SECRET)
 
 			if err != nil {
 				t.Fatalf("expected token to parse, got %v", err)
