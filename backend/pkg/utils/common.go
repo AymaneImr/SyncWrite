@@ -5,7 +5,10 @@ import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"encoding/hex"
+	"errors"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func GenerateDocumentLink() string {
@@ -22,6 +25,19 @@ func GenerateSessionToken() string {
 	b := make([]byte, 12)
 	rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+func CredentialsExists(username, email string) (bool, error) {
+	result := db.Db.Where("Username = ? OR Email = ?", username, email).First(&models.User{})
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, result.Error
+	}
+
+	return true, nil
 }
 
 func HasDocumentAccess(userID uint, docID uint) bool {

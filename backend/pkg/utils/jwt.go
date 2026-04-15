@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"document_editor/pkg/config"
-
 	"github.com/golang-jwt/jwt/v5"
 
 	"errors"
@@ -14,30 +12,27 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userId uint) (string, error) {
-
+func GenerateToken(userId uint, secret string, duration time.Duration) (string, error) {
 	claims := &Claims{
 		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.Env.JWT_SECRET))
+	return token.SignedString([]byte(secret))
 }
 
-func GenerateRefreshToken(userId uint) (string, error) {
-	claims := &Claims{
-		UserID: userId,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
-		},
-	}
+func GenerateAccessToken(userId uint, secret string) (string, error) {
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.Env.REFRESH_SECRET))
+	return GenerateToken(userId, secret, 30*time.Minute)
+}
+
+func GenerateRefreshToken(userId uint, secret string) (string, error) {
+
+	return GenerateToken(userId, secret, 30*24*time.Hour)
 }
 
 func ParseToken(tokenStr string, secret string) (*Claims, error) {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"document_editor/pkg/config"
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
@@ -13,19 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-func CredentialsExists(username, email string) (bool, error) {
-	result := db.Db.Where("Username = ? OR Email = ?", username, email).First(&models.User{})
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-		return false, result.Error
-	}
-
-	return true, nil
-}
 
 func RegisterUser(r *gin.Context) {
 
@@ -53,7 +41,7 @@ func RegisterUser(r *gin.Context) {
 		return
 	}
 
-	exists, err := CredentialsExists(req.Username, req.Email)
+	exists, err := utils.CredentialsExists(req.Username, req.Email)
 	if exists {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Username Or Email already exists"})
 		return
@@ -124,8 +112,8 @@ func Login(r *gin.Context) {
 		return
 	}
 
-	access, _ := utils.GenerateAccessToken(db_user.ID)
-	refresh, _ := utils.GenerateRefreshToken(db_user.ID)
+	access, _ := utils.GenerateAccessToken(db_user.ID, config.Env.JWT_SECRET)
+	refresh, _ := utils.GenerateRefreshToken(db_user.ID, config.Env.REFRESH_SECRET)
 
 	// create user session
 	session := models.UserSession{
