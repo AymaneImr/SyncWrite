@@ -31,7 +31,7 @@ func RegisterUser(r *gin.Context) {
 		return
 	}
 
-	if req.Username == " " || req.Email == " " || req.Password == " " || req.ConfirmPassword == " " {
+	if req.Username == "" || req.Email == "" || req.Password == "" || req.ConfirmPassword == "" {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Missing fields"})
 		return
 	}
@@ -97,7 +97,7 @@ func Login(r *gin.Context) {
 	result := db.Db.Where("Email = ? ", req.Email).First(&db_user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			r.JSON(http.StatusNotFound, gin.H{"error": "User with this this username doesn't exist"})
+			r.JSON(http.StatusNotFound, gin.H{"error": "User with this this email doesn't exist"})
 			return
 		}
 

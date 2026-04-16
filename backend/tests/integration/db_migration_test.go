@@ -3,51 +3,12 @@ package integration
 import (
 	"document_editor/pkg/db"
 	"document_editor/pkg/models"
-	testutils "document_editor/tests"
 
-	"fmt"
 	"testing"
-	"time"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func TestMigrateModels(t *testing.T) {
-	testutils.EnvTest = &testutils.ConfigTest{
-		DB_URL: "postgres://dev:test_pass@localhost:5432/doc_editor_db_test",
-	}
-
-	testDB, err := gorm.Open(postgres.Open(testutils.EnvTest.DB_URL), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("connect test database failed: %v", err)
-	}
-
-	sqlDB, err := testDB.DB()
-	if err != nil {
-		t.Fatalf("get sql db failed: %v", err)
-	}
-
-	sqlDB.SetMaxOpenConns(1)
-
-	t.Cleanup(func() {
-		_ = sqlDB.Close()
-	})
-
-	schema := fmt.Sprintf("migration_test_%d", time.Now().UnixNano())
-	if err := testDB.Exec(`CREATE SCHEMA ` + schema).Error; err != nil {
-		t.Fatalf("create test schema failed %v", err)
-	}
-
-	t.Cleanup(func() {
-		if err = testDB.Exec(`DROP SCHEMA ` + schema + ` CASCADE`).Error; err != nil {
-			t.Fatalf("cleanup failed: %v", err)
-		}
-	})
-
-	if err := testDB.Exec(`SET search_path To ` + schema).Error; err != nil {
-		t.Fatalf("set search path: %v", err)
-	}
+	testDB := openTestDB(t, "migration_test")
 
 	if err := db.Migrate(testDB); err != nil {
 		t.Fatalf("Migrate() failed: %v", err)
