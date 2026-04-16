@@ -28,6 +28,8 @@ func TestMigrateModels(t *testing.T) {
 		t.Fatalf("get sql db failed: %v", err)
 	}
 
+	sqlDB.SetMaxOpenConns(1)
+
 	t.Cleanup(func() {
 		_ = sqlDB.Close()
 	})
@@ -51,7 +53,7 @@ func TestMigrateModels(t *testing.T) {
 		t.Fatalf("Migrate() failed: %v", err)
 	}
 
-	models := []struct {
+	test_models := []struct {
 		name  string
 		model any
 	}{
@@ -63,7 +65,7 @@ func TestMigrateModels(t *testing.T) {
 		{"document event table", &models.DocumentEvent{}},
 	}
 
-	for _, tt := range models {
+	for _, tt := range test_models {
 		t.Run(tt.name, func(t *testing.T) {
 			if !testDB.Migrator().HasTable(tt.model) {
 				t.Fatalf("expected table for %T to exist", tt.model)
