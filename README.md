@@ -10,7 +10,8 @@
 ## Core Features
 
 * JWT-based authentication with protected routes
-* Document management (create, open, upload, delete, personal library)
+* Document management (create, open, delete, personal library)
+* **Beta**: upload, export support (most export formats are still in progress)
 * Search and filtering for documents
 * Rich text editor (formatting, lists, colors, alignment, etc.)
 * Real-time collaboration using WebSockets
