@@ -27,7 +27,8 @@ const Hero: React.FC = () => {
     {
       title: "Document Import/Export",
       description:
-        "Support for multiple formats including PDF, TXT, and more. Easily import existing documents or export your work.",
+        "Import existing documents or export your work while format support continues to expand.",
+      badge: "Beta",
       accentClass: styles.purpleAccent,
       cardToneClass: styles.purpleCard,
       icon: FileUp,
@@ -103,6 +104,7 @@ const Hero: React.FC = () => {
               key={feature.title}
               title={feature.title}
               description={feature.description}
+              badge={feature.badge}
               accentClass={feature.accentClass}
               cardToneClass={feature.cardToneClass}
               icon={feature.icon}

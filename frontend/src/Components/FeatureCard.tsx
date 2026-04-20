@@ -5,6 +5,7 @@ import styles from "../css/FeatureCard.module.css";
 interface Props {
   title: string;
   description: string;
+  badge?: string;
   accentClass: string;
   cardToneClass: string;
   icon: LucideIcon;
@@ -13,6 +14,7 @@ interface Props {
 export default function FeatureCard({
   title,
   description,
+  badge,
   accentClass,
   cardToneClass,
   icon: Icon,
@@ -23,7 +25,10 @@ export default function FeatureCard({
         <Icon size={28} strokeWidth={2.1} />
       </div>
 
-      <h3 className={styles.cardTitle}>{title}</h3>
+      <div className={styles.titleRow}>
+        <h3 className={styles.cardTitle}>{title}</h3>
+        {badge ? <span className={styles.betaBadge}>{badge}</span> : null}
+      </div>
       <p className={styles.cardDescription}>{description}</p>
     </article>
   );
