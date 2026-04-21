@@ -1,5 +1,4 @@
 backend/.env
-backend/.env.docker
 
 backend/.project
 frontend/.project
