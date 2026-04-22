@@ -7,14 +7,37 @@
   overflow-y: auto;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 14px 14px 22px;
+}
+
 .title {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 22px 14px;
   margin: 0;
   font-size: 1rem;
   font-weight: 500;
+  color: #334155;
+}
+
+.toggleButton {
+  width: 34px;
+  height: 34px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.22s ease;
+}
+
+.toggleButton:hover {
+  background: rgba(148, 163, 184, 0.12);
   color: #334155;
 }
 

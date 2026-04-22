@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import styles from "../css/OnlineEditors.module.css";
-import { Users, Crown, Eye, Pencil, EllipsisVertical, UserRoundX } from "lucide-react";
+import { Users, Crown, Eye, Pencil, EllipsisVertical, UserRoundX, ChevronRight } from "lucide-react";
 import { getCollaboratorTheme } from "../common/collabTheme";
 
 export interface OnlineUser {
@@ -57,6 +57,7 @@ interface Props {
   collaborators: Collaborators[];
   ownerId?: string;
   currentUserId?: number;
+  onClose?: () => void;
 }
 
 export default function OnlineEditors({
@@ -67,6 +68,7 @@ export default function OnlineEditors({
   collaborators,
   ownerId,
   currentUserId,
+  onClose,
 }: Props) {
   const [openMenuUserId, setOpenMenuUserId] = useState<number | null>(null);
   const [permissionOverrides, setPermissionOverrides] = useState<Record<number, string>>({});
@@ -180,10 +182,23 @@ export default function OnlineEditors({
 
   return (
     <aside className={styles.sidebar}>
-      <h3 className={styles.title}>
-        <Users size={18} />
-        {onlineUsers.length} Online
-      </h3>
+      <div className={styles.header}>
+        <h3 className={styles.title}>
+          <Users size={18} />
+          {onlineUsers.length} Online
+        </h3>
+        <button
+          type="button"
+          className={styles.toggleButton}
+          aria-label="Hide online users"
+          onClick={() => {
+            setOpenMenuUserId(null);
+            onClose?.();
+          }}
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
       <div className={styles.divider} />
 
       <div className={styles.userList}>

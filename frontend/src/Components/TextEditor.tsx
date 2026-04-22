@@ -1,6 +1,6 @@
 
 import { useRef } from "react";
-import { FileText, LogOut } from "lucide-react";
+import { FileText, LogOut, Users } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
@@ -175,6 +175,7 @@ export default function TextEditor() {
   const [showEndSessionModal, SetshowEndSessionModal] = useState(false)
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
+  const [showOnlinePanel, setShowOnlinePanel] = useState(true);
   const [activityToast, setActivityToast] = useState<ActivityToast | null>(null);
   const activityTimerRef = useRef<number | null>(null);
 
@@ -655,15 +656,33 @@ export default function TextEditor() {
           />
         </div>
 
-        <OnlineEditors
-          id={id}
-          token={token}
-          onlineUsers={onlineUsers}
-          setOnlineUsers={setOnlineUsers}
-          ownerId={doc?.owner_id}
-          currentUserId={currentUser.user_id}
-          collaborators={collaborators}
-        />
+        <div
+          className={`${styles.onlinePanel} ${!showOnlinePanel ? styles.onlinePanelClosed : ""}`}
+          aria-hidden={!showOnlinePanel}
+        >
+          <OnlineEditors
+            id={id}
+            token={token}
+            onlineUsers={onlineUsers}
+            setOnlineUsers={setOnlineUsers}
+            ownerId={doc?.owner_id}
+            currentUserId={currentUser.user_id}
+            collaborators={collaborators}
+            onClose={() => setShowOnlinePanel(false)}
+          />
+        </div>
+
+        {!showOnlinePanel && (
+          <button
+            type="button"
+            className={styles.showOnlineButton}
+            aria-label="Show online users"
+            onClick={() => setShowOnlinePanel(true)}
+          >
+            <Users size={18} />
+            {onlineUsers.length}
+          </button>
+        )}
       </div>
 
       {showEndSessionModal && (
