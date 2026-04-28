@@ -13,10 +13,12 @@ func RegisterRoutes(r *gin.Engine) {
 	// Auth routes
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/login", handlers.Login)                  // works
-		auth.POST("/register", handlers.RegisterUser)        // works
-		auth.POST("/resetPassword", handlers.ChnagePassword) // works
-		auth.POST("/logout", utils.Auth(), handlers.Logout)  // works
+		auth.POST("/login", handlers.Login)           // works
+		auth.POST("/register", handlers.RegisterUser) // works
+		auth.POST("/password-reset/request", handlers.RequestPasswordReset)
+		auth.GET("/password-reset/verify", handlers.VerifyPasswordResetToken)
+		auth.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
+		auth.POST("/logout", utils.Auth(), handlers.Logout) // works
 	}
 
 	// Document routes

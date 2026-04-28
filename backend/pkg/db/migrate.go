@@ -38,6 +38,7 @@ func Migrate(db *gorm.DB) error {
 	models := []any{
 		&models.User{},
 		&models.UserSession{},
+		&models.PasswordResetToken{},
 		&models.Document{},
 		&models.DocumentSession{},
 		&models.DocumentCollaborator{},

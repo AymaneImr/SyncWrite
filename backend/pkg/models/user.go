@@ -9,6 +9,7 @@ type User struct {
 	Created  int64  `gorm:"autoCreateTime:milli; not null" json:"created"`
 
 	Sessions             []UserSession          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	PasswordResetTokens  []PasswordResetToken   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	Documents            []Document             `gorm:"foreignKey:OwnerID; constraint:OnDelete:CASCADE"`
 	DocumentSessions     []DocumentSession      `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE"`
 	DocumentCollaborator []DocumentCollaborator `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE"`
@@ -26,4 +27,13 @@ type UserSession struct {
 	ExpiresAt    int64  `gorm:"type:int8; not null" json:"expires_at"`
 	IsRevoked    bool   `gorm:"type:bool; not null" json:"is_revoked"`
 	IpAddress    string `gorm:"type:text; not null" json:"ip_address"`
+}
+
+type PasswordResetToken struct {
+	ID        uint   `gorm:"primaryKey; not null; autoIncrement; unique" json:"id"`
+	UserID    uint   `gorm:"not null; index" json:"user_id"`
+	Token     string `gorm:"type:text; not null; unique" json:"token"`
+	CreatedAt int64  `gorm:"autoCreateTime:milli; not null" json:"created_at"`
+	ExpiresAt int64  `gorm:"type:int8; not null" json:"expires_at"`
+	IsUsed    bool   `gorm:"type:bool; not null; default:false" json:"is_used"`
 }

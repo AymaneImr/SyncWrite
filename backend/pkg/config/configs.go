@@ -10,6 +10,10 @@ type Config struct {
 	DB_URL         string
 	JWT_SECRET     string
 	REFRESH_SECRET string
+	SMTP_HOST      string
+	SMTP_PORT      string
+	SMTP_EMAIL     string
+	SMTP_PASSWORD  string
 }
 
 var Env *Config
@@ -19,6 +23,10 @@ func LoadConfig() {
 		DB_URL:         BuildDBURL(),
 		JWT_SECRET:     os.Getenv("JWT_SECRET"),
 		REFRESH_SECRET: os.Getenv("REFRESH_SECRET"),
+		SMTP_HOST:      os.Getenv("SMTP_HOST"),
+		SMTP_PORT:      os.Getenv("SMTP_PORT"),
+		SMTP_EMAIL:     os.Getenv("SMTP_EMAIL"),
+		SMTP_PASSWORD:  os.Getenv("SMTP_PASSWORD"),
 	}
 
 	if Env.JWT_SECRET == "" {
