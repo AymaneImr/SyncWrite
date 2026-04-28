@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, Github, Chrome } from "lucide-react";
 import ForgotPassword from "./ForgotPassword";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -218,4 +218,3 @@ const LoginForm: React.FC = () => {
 };
 
 export default LoginForm;
-
