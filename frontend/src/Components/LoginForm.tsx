@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "../css/Login.module.css";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, Github, Chrome } from "lucide-react";
 import ForgotPassword from "./ForgotPassword";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,8 +13,16 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      setMessage(error);
+    }
+  }, [searchParams]);
 
   const clearFields = () => {
     setUsername("");
@@ -72,7 +80,7 @@ const LoginForm: React.FC = () => {
   //TODO: implement OAuth properly later
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8080/auth/google";
+    window.location.href = "http://localhost:8080/api/auth/google/login";
   };
 
   const handleGithubLogin = () => {
