@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "../css/Login.module.css";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, User, Github, Chrome } from "lucide-react";
+import { Mail, Lock, User, Chrome } from "lucide-react";
 import ForgotPassword from "./ForgotPassword";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -77,14 +77,8 @@ const LoginForm: React.FC = () => {
     }
   };
 
-  //TODO: implement OAuth properly later
-
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8080/api/auth/google/login";
-  };
-
-  const handleGithubLogin = () => {
-    window.location.href = "http://localhost:8080/auth/github";
   };
 
   return (
@@ -181,7 +175,7 @@ const LoginForm: React.FC = () => {
           </Button>
 
           <div className={styles.divider}>
-            <span>Or continue with</span>
+            <span>Or continue with Google</span>
           </div>
 
           <div className={styles.oauth}>
@@ -190,14 +184,8 @@ const LoginForm: React.FC = () => {
               className={styles.oauthBtn}
               onClick={handleGoogleLogin}
             >
-              <Chrome size={18} /> Google
-            </button>
-            <button
-              type="button"
-              className={styles.oauthBtn}
-              onClick={handleGithubLogin}
-            >
-              <Github size={18} /> GitHub
+              <Chrome size={18} /> Continue with Google
+
             </button>
           </div>
 
