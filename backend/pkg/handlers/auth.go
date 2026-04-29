@@ -175,7 +175,7 @@ func RequestPasswordReset(r *gin.Context) {
 	resetToken := models.PasswordResetToken{
 		UserID:    db_user.ID,
 		Token:     utils.HashResetToken(token),
-		ExpiresAt: time.Now().Add(30 * time.Minute).Unix(),
+		ExpiresAt: time.Now().Add(3 * time.Minute).Unix(),
 		IsUsed:    false,
 	}
 
