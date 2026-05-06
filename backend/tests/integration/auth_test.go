@@ -14,15 +14,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type TestCases struct {
+	name         string
+	body         map[string]string
+	expectStatus int
+	expectKey    string
+	expectValue  string
+}
+
 func TestRegisterUser(t *testing.T) {
 
-	cases := []struct {
-		name         string
-		body         map[string]string
-		expectStatus int
-		expectKey    string
-		expectValue  string
-	}{
+	cases := []TestCases{
 		{
 			name: "success",
 			body: map[string]string{
@@ -126,13 +128,7 @@ func TestRegisterUser(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 
-	cases := []struct {
-		name         string
-		body         map[string]string
-		expectStatus int
-		expectKey    string
-		expectValue  string
-	}{
+	cases := []TestCases{
 		{
 			name: "success",
 			body: map[string]string{

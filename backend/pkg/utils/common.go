@@ -102,6 +102,10 @@ func RevokeDocumentSession(userID uint, docID uint) error {
 }
 
 func SendEmail(send_to string, subject string, body string) error {
+	if config.Env == nil {
+		return errors.New("email config is not loaded")
+	}
+
 	smtpPort, err := strconv.Atoi(config.Env.SMTP_PORT)
 	if err != nil {
 		return fmt.Errorf("invalid SMTP_PORT: %w", err)
@@ -109,13 +113,14 @@ func SendEmail(send_to string, subject string, body string) error {
 
 	msg := gomail.NewMessage()
 
+	// TODO: replace these simple Headers, and body message later
 	msg.SetHeader("From", config.Env.SMTP_EMAIL)
 	msg.SetHeader("To", send_to)
 	msg.SetHeader("Subject", subject)
 
 	msg.SetBody("text/plain", body)
 
-	dialer := gomail.NewDialer(
+	dialer := newEmailDialer(
 		config.Env.SMTP_HOST,
 		smtpPort,
 		config.Env.SMTP_EMAIL,
