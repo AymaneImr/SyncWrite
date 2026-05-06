@@ -44,6 +44,19 @@ func TestGenerateSessionToken(t *testing.T) {
 	}
 }
 
+func TestGenerateResetToken(t *testing.T) {
+	result, err := utils.GenerateResetToken()
+
+	if err != nil {
+		t.Fatalf("failed to generate reset token, got: %v", err)
+	}
+
+	if len(result) != 43 {
+		t.Fatalf("GenerateResetToken() generated more or less than 64 chars, got: %d", len(result))
+		t.Fatalf("generated token: %x ", result)
+	}
+}
+
 // test generate token for both access token and refrsh token
 // NOTE: this test doesn't call GenerateAccessToken() or GenerateRefreshToken() directly
 // so if any changes were made inside these function this test may FAIL (i hope it doesn't)

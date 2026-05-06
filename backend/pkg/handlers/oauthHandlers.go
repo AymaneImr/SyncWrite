@@ -39,10 +39,6 @@ func OauthLogin(r *gin.Context) {
 	r.Redirect(http.StatusTemporaryRedirect, oauthConfig.AuthCodeURL("google-oauth"))
 }
 
-func Oauth(r *gin.Context) {
-	OauthLogin(r)
-}
-
 func OauthCallback(r *gin.Context) {
 	code := r.Query("code")
 	if code == "" {

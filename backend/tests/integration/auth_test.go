@@ -5,11 +5,13 @@ import (
 	"document_editor/pkg/config"
 	"document_editor/pkg/handlers"
 	"document_editor/pkg/models"
+	"document_editor/pkg/utils"
 	testutils "document_editor/tests"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -257,6 +259,402 @@ func TestLogin(t *testing.T) {
 
 			if user_session.RefreshToken != refresh_token {
 				t.Fatal("expected stored refresh token to match response refresh token")
+			}
+		})
+	}
+
+}
+
+func TestRequestPasswordReset(t *testing.T) {
+
+	cases := []TestCases{
+		{
+			name: "success",
+			body: map[string]string{
+				"email": "test_user@example.com",
+			},
+			expectStatus: http.StatusOK,
+			expectKey:    "info",
+			expectValue:  "A password reset link has been sent, check your mail box",
+		},
+		{
+			name:         "missing fields ",
+			body:         map[string]string{},
+			expectStatus: http.StatusBadRequest,
+			expectKey:    "error",
+			expectValue:  "Missing fields",
+		},
+		{
+			name: "user not found ",
+			body: map[string]string{
+				"email": "not_found_user@example.com",
+			},
+			expectStatus: http.StatusNotFound,
+			expectKey:    "error",
+			expectValue:  "User with this Email doesn't exist",
+		},
+	}
+
+	config.Env = &config.Config{
+		JWT_SECRET:     "jwt-secret",
+		REFRESH_SECRET: "refresh-secret",
+		SMTP_HOST:      "smtp.example.com",
+		SMTP_PORT:      "587",
+		SMTP_EMAIL:     "noreply@example.com",
+		SMTP_PASSWORD:  "secret",
+	}
+
+	r := testutils.Route{
+		Method:   "POST",
+		Endpoint: "/api/auth/password-reset/request",
+		Handler:  handlers.RequestPasswordReset,
+	}
+
+	for _, tc := range cases {
+
+		t.Run(tc.name, func(t *testing.T) {
+
+			testDB := openMigratedTestDB(t, "test_request_password_reset")
+			router := setupRouter(r)
+
+			fakeDialer := &utils.FakeEmailDialer{}
+			restoreDialer := utils.UseEmailDialerFactory(func(host string, port int, username, password string) utils.EmailDialer {
+				return fakeDialer
+			})
+			t.Cleanup(restoreDialer)
+
+			test_password := "password.123"
+			hashed_password, err := bcrypt.GenerateFromPassword([]byte(test_password), bcrypt.DefaultCost)
+			if err != nil {
+				t.Fatalf("failed to hash password: %v", err)
+			}
+
+			user := models.User{
+				Username: "test_user",
+				Email:    "test_user@example.com",
+				Password: string(hashed_password),
+				IsActive: false,
+			}
+
+			if err := testDB.Create(&user).Error; err != nil {
+				t.Fatalf("failed to create user table: %v", err)
+			}
+
+			payload, err := json.Marshal(&tc.body)
+			if err != nil {
+				t.Fatalf("failed to marshal request body: %v", err)
+			}
+
+			req := httptest.NewRequest(r.Method, r.Endpoint, bytes.NewReader(payload))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectStatus {
+				t.Fatalf("expected %d, got %d", tc.expectStatus, rec.Code)
+			}
+
+			var res map[string]any
+			if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+				t.Fatalf("failed to unmarshal response body: %v", err)
+			}
+
+			if res[tc.expectKey] != tc.expectValue {
+				t.Fatalf("expected %q, got %q", tc.expectValue, res[tc.expectKey])
+			}
+
+			if rec.Code != http.StatusOK {
+				return
+			}
+
+			if len(fakeDialer.Messages) != 1 {
+				t.Fatalf("expected only one email to be sent, messages: %d", len(fakeDialer.Messages))
+			}
+
+			var resetToken models.PasswordResetToken
+			if err := testDB.Where("user_id = ? AND expires_at > ?", user.ID, time.Now().Unix()).First(&resetToken).Error; err != nil {
+				t.Fatalf("expected resetToken to be created %v", err)
+			}
+
+			if resetToken.UserID != user.ID {
+				t.Fatalf("expected reset token user_id = %d, got: %d", user.ID, resetToken.UserID)
+			}
+
+			if resetToken.Token == "" {
+				t.Fatal("expected reset token not to be empty")
+			}
+
+			if resetToken.IsUsed {
+				t.Fatal("expected IsUsed to be false")
+			}
+
+			now := time.Now().Unix()
+			minExpiresAt := now + int64((3 * time.Minute).Seconds()) - 5
+			maxExpiresAt := now + int64((3 * time.Minute).Seconds()) + 5
+
+			if resetToken.ExpiresAt < minExpiresAt || resetToken.ExpiresAt > maxExpiresAt {
+				t.Fatalf("expected expires_at to be about 3 minutes in the future, got %d", resetToken.ExpiresAt)
+			}
+
+		})
+	}
+}
+
+func TestVerifyPasswordResetToken(t *testing.T) {
+
+	cases := []TestCases{
+		{
+			name:         "success",
+			expectStatus: http.StatusOK,
+			expectKey:    "info",
+			expectValue:  "Reset token is valid",
+		},
+		{
+			name:         "missing token",
+			expectStatus: http.StatusBadRequest,
+			expectKey:    "error",
+			expectValue:  "Missing token",
+		},
+		{
+			name:         "invalid or expired token",
+			expectStatus: http.StatusUnauthorized,
+			expectKey:    "error",
+			expectValue:  "Invalid or expired reset token",
+		},
+	}
+
+	config.Env = &config.Config{
+		JWT_SECRET:     "jwt-secret",
+		REFRESH_SECRET: "refresh-secret",
+	}
+
+	r := testutils.Route{
+		Method:   "GET",
+		Endpoint: "/api/auth/password-reset/verify",
+		Handler:  handlers.VerifyPasswordResetToken,
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testDB := openMigratedTestDB(t, "test_verify_password_reset")
+			router := setupRouter(r)
+
+			rawToken := "valid-reset-token"
+			endpoint := r.Endpoint
+
+			user := models.User{
+				Username: "test_user",
+				Email:    "test_user@example.com",
+				Password: "hashed-password",
+			}
+
+			if err := testDB.Create(&user).Error; err != nil {
+				t.Fatalf("failed to create user: %v", err)
+			}
+
+			switch tc.name {
+			case "success":
+				resetToken := models.PasswordResetToken{
+					UserID:    user.ID,
+					Token:     utils.HashResetToken(rawToken),
+					ExpiresAt: time.Now().Add(3 * time.Minute).Unix(),
+					IsUsed:    false,
+				}
+
+				if err := testDB.Create(&resetToken).Error; err != nil {
+					t.Fatalf("failed to create reset token: %v", err)
+				}
+
+				endpoint += "?token=" + rawToken
+			case "missing token":
+			case "invalid or expired token":
+				resetToken := models.PasswordResetToken{
+					UserID:    user.ID,
+					Token:     utils.HashResetToken(rawToken),
+					ExpiresAt: time.Now().Add(-3 * time.Minute).Unix(),
+					IsUsed:    false,
+				}
+
+				if err := testDB.Create(&resetToken).Error; err != nil {
+					t.Fatalf("failed to create expired reset token: %v", err)
+				}
+
+				endpoint += "?token=wrong-reset-token"
+			}
+
+			req := httptest.NewRequest(r.Method, endpoint, nil)
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectStatus {
+				t.Fatalf("expected %d, got %d", tc.expectStatus, rec.Code)
+			}
+
+			var res map[string]any
+			if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+				t.Fatalf("failed to unmarshal response body: %v", err)
+			}
+
+			if res[tc.expectKey] != tc.expectValue {
+				t.Fatalf("expected %q, got %q", tc.expectValue, res[tc.expectKey])
+			}
+		})
+	}
+}
+
+func TestConfirmPasswordReset(t *testing.T) {
+	cases := []TestCases{
+		{
+			name: "success",
+			body: map[string]string{
+				"token":           "valid-reset-token",
+				"newPassword":     "password.123",
+				"confirmPassword": "password.123",
+			},
+			expectStatus: http.StatusAccepted,
+			expectKey:    "info",
+			expectValue:  "Password changed successfully",
+		},
+		{
+			name: "missing fields",
+			body: map[string]string{
+				"token":       "valid-reset-token",
+				"newPassword": "password.123",
+			},
+			expectStatus: http.StatusBadRequest,
+			expectKey:    "error",
+			expectValue:  "Missing fields",
+		},
+		{
+			name: "password mismatch",
+			body: map[string]string{
+				"token":           "valid-reset-token",
+				"newPassword":     "password.123",
+				"confirmPassword": "password.12",
+			},
+			expectStatus: http.StatusBadRequest,
+			expectKey:    "error",
+			expectValue:  "Passwords dont match",
+		},
+		{
+			name: "invalid or expired token",
+			body: map[string]string{
+				"token":           "wrong-reset-token",
+				"newPassword":     "password.123",
+				"confirmPassword": "password.123",
+			},
+			expectStatus: http.StatusUnauthorized,
+			expectKey:    "error",
+			expectValue:  "Invalid or expired reset token",
+		},
+	}
+
+	config.Env = &config.Config{
+		JWT_SECRET:     "jwt-secret",
+		REFRESH_SECRET: "refresh-secret",
+	}
+
+	r := testutils.Route{
+		Method:   "POST",
+		Endpoint: "/api/auth/password-reset/confirm",
+		Handler:  handlers.ConfirmPasswordReset,
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testDB := openMigratedTestDB(t, "test_confirm_password_reset")
+			router := setupRouter(r)
+
+			test_password := "password.123"
+			hashed_password, err := bcrypt.GenerateFromPassword([]byte(test_password), bcrypt.DefaultCost)
+			if err != nil {
+				t.Fatalf("failed to hash password: %v", err)
+			}
+
+			user := &models.User{
+				Username: "test_user",
+				Email:    "test_user@example.com",
+				Password: string(hashed_password),
+			}
+
+			if err := testDB.Create(&user).Error; err != nil {
+				t.Fatalf("failed to create user: %v", err)
+			}
+
+			rawToken := "valid-reset-token"
+			resetToken := models.PasswordResetToken{
+				UserID:    user.ID,
+				Token:     utils.HashResetToken(rawToken),
+				ExpiresAt: time.Now().Add(3 * time.Minute).Unix(),
+				IsUsed:    false,
+			}
+
+			if err := testDB.Create(&resetToken).Error; err != nil {
+				t.Fatalf("failed to create reset token: %v", err)
+			}
+
+			if tc.name == "invalid or expired token" {
+				if err := testDB.Model(&models.PasswordResetToken{}).
+					Where("id = ?", resetToken.ID).
+					Update("expires_at", time.Now().Add(-3*time.Minute).Unix()).Error; err != nil {
+					t.Fatalf("failed to expire reset token: %v", err)
+				}
+			}
+
+			payload, err := json.Marshal(&tc.body)
+			if err != nil {
+				t.Fatalf("failed to marshal request body: %v", err)
+			}
+
+			req := httptest.NewRequest(r.Method, r.Endpoint, bytes.NewReader(payload))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectStatus {
+				t.Fatalf("expected %d, got %d", tc.expectStatus, rec.Code)
+			}
+
+			var res map[string]any
+			if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+				t.Fatalf("failed to unmarshal response body: %v", err)
+			}
+
+			if res[tc.expectKey] != tc.expectValue {
+				t.Fatalf("expected %q, got %q", tc.expectValue, res[tc.expectKey])
+			}
+
+			var updatedUser models.User
+			if err := testDB.First(&updatedUser, user.ID).Error; err != nil {
+				t.Fatalf("failed to fetch updated user: %v", err)
+			}
+
+			var updatedResetToken models.PasswordResetToken
+			if err := testDB.First(&updatedResetToken, resetToken.ID).Error; err != nil {
+				t.Fatalf("failed to fetch updated reset token: %v", err)
+			}
+
+			if tc.expectStatus == http.StatusAccepted {
+				if err := bcrypt.CompareHashAndPassword([]byte(updatedUser.Password), []byte(tc.body["newPassword"])); err != nil {
+					t.Fatalf("expected password to be updated: %v", err)
+				}
+
+				if !updatedResetToken.IsUsed {
+					t.Fatal("expected reset token to be marked used")
+				}
+
+				return
+			}
+
+			if err := bcrypt.CompareHashAndPassword([]byte(updatedUser.Password), []byte(test_password)); err != nil {
+				t.Fatalf("expected password to remain unchanged: %v", err)
+			}
+
+			if updatedResetToken.IsUsed {
+				t.Fatal("expected reset token to remain unused")
 			}
 		})
 	}

@@ -204,15 +204,10 @@ func VerifyPasswordResetToken(r *gin.Context) {
 	}
 
 	var resetToken models.PasswordResetToken
-	err := db.Db.
+	if err := db.Db.
 		Where("token = ? AND is_used = false AND expires_at > ?", utils.HashResetToken(token), time.Now().Unix()).
-		First(&resetToken).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			r.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired reset token"})
-			return
-		}
-		r.JSON(http.StatusInternalServerError, gin.H{"error": "Could not verify reset token"})
+		First(&resetToken).Error; err != nil {
+		r.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired reset token"})
 		return
 	}
 
@@ -231,7 +226,7 @@ func ConfirmPasswordReset(r *gin.Context) {
 		return
 	}
 
-	if req.Token == "" || req.NewPassword == "" {
+	if req.Token == "" || req.NewPassword == "" || req.ConfirmPassword == "" {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Missing fields"})
 		return
 	}
