@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import text_left_icon from '../assets/file-alt-svgrepo-com.svg';
 import text_right_icon from '../assets/file-cloud-svgrepo-com.svg';
-import table_right_icon from '../assets/table-alt-svgrepo-com.svg';
-import table_left_icon from '../assets/table-layout-svgrepo-com.svg';
 import styles from '../css/Docs.module.css';
 import {
   fileNameToTitle,
@@ -19,7 +17,6 @@ import NavBar from './NavBar.tsx';
 export default function DocsPage() {
   const [showExistingDocuments, setShowExistingDocuments] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [uploadedTable, setUploadedTable] = useState<File | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -75,15 +72,6 @@ export default function DocsPage() {
     }
   };
 
-  const handleTableUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-
-    if (file) {
-      setUploadedTable(file);
-      alert(`Table uploaded: ${file.name} (demo) - backend integration left to you`);
-    }
-  };
-
   const handleOpenByDoc = async (link: string) => {
     if (!link || !token) return;
 
@@ -118,8 +106,8 @@ export default function DocsPage() {
       <div className={styles.pageWrap}>
         {!showExistingDocuments && (
           <>
-          <h1 className={styles.heading}>What would you like to work with?</h1>
-          <p className={styles.sub}>Choose the type of document you want to create or upload</p>
+          <h1 className={styles.heading}>Start your text document</h1>
+          <p className={styles.sub}>Create a new text document or open one you already have</p>
 
           <div className={styles.grid}>
             <Cards
@@ -135,17 +123,6 @@ export default function DocsPage() {
               leftIcon={text_left_icon}
               rightIcon={text_right_icon}
             />
-
-            <Cards
-              title="Table Document"
-              subtitle="Work with spreadsheets and CSV files"
-              accent="green"
-              iconBg="#d1f9d5"
-              uploadAccept=".xlsx,.csv"
-              onUpload={handleTableUpload}
-              leftIcon={table_left_icon}
-              rightIcon={table_right_icon}
-            />
           </div>
 
           <p className={styles.hint}>
@@ -155,9 +132,6 @@ export default function DocsPage() {
 
           {uploadedFile && (
             <div className={styles.uploadInfo}>Uploaded text file: {uploadedFile.name}</div>
-          )}
-          {uploadedTable && (
-            <div className={styles.uploadInfo}>Uploaded table file: {uploadedTable.name}</div>
           )}
           </>
         )}
