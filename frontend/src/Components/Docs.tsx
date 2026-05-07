@@ -14,6 +14,7 @@ import Cards from './Card.tsx';
 import CreateDocumentModal from './CreateDocModal.tsx';
 import ExistingDocuments from './ExistingDocuments.tsx';
 import OpenByLinkModal from './OpenByLinkModal.tsx';
+import NavBar from './NavBar.tsx';
 
 export default function DocsPage() {
   const [showExistingDocuments, setShowExistingDocuments] = useState(false);
@@ -112,9 +113,11 @@ export default function DocsPage() {
   };
 
   return (
-    <div className={styles.pageWrap}>
-      {!showExistingDocuments && (
-        <>
+    <>
+      <NavBar />
+      <div className={styles.pageWrap}>
+        {!showExistingDocuments && (
+          <>
           <h1 className={styles.heading}>What would you like to work with?</h1>
           <p className={styles.sub}>Choose the type of document you want to create or upload</p>
 
@@ -156,32 +159,33 @@ export default function DocsPage() {
           {uploadedTable && (
             <div className={styles.uploadInfo}>Uploaded table file: {uploadedTable.name}</div>
           )}
-        </>
-      )}
+          </>
+        )}
 
-      {showExistingDocuments && (
-        <ExistingDocuments
-          onBack={() => {
-            setShowExistingDocuments(false);
-          }}
-        />
-      )}
+        {showExistingDocuments && (
+          <ExistingDocuments
+            onBack={() => {
+              setShowExistingDocuments(false);
+            }}
+          />
+        )}
 
-      {showLinkModal && (
-        <OpenByLinkModal
-          onClose={() => setShowLinkModal(false)}
-          onOpen={(link) => {
-            handleOpenByDoc(link);
-          }}
-        />
-      )}
+        {showLinkModal && (
+          <OpenByLinkModal
+            onClose={() => setShowLinkModal(false)}
+            onOpen={(link) => {
+              handleOpenByDoc(link);
+            }}
+          />
+        )}
 
-      {showCreateModal && (
-        <CreateDocumentModal
-          onClose={() => setShowCreateModal(false)}
-          onCreate={handleCreateDocument}
-        />
-      )}
-    </div>
+        {showCreateModal && (
+          <CreateDocumentModal
+            onClose={() => setShowCreateModal(false)}
+            onCreate={handleCreateDocument}
+          />
+        )}
+      </div>
+    </>
   );
 }

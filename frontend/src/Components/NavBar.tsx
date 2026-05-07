@@ -1,12 +1,23 @@
 
+import { useState } from 'react';
 import styles from '../css/Navbar.module.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { isAuthenticated } from "@/common/ProtectedRoute";
 import { FileText } from 'lucide-react';
+import { logoutUser } from '@/common/logout';
+import ConfirmLogoutModal from './ConfirmLogoutModal.tsx';
 
 export default function NavBar() {
-
   const loggedIn = isAuthenticated();
+  const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("access_token");
+    await logoutUser(token);
+    setShowLogoutModal(false);
+    navigate("/login", { replace: true });
+  };
 
   return (
     <>
@@ -43,10 +54,25 @@ export default function NavBar() {
                   </>
                 )}
 
+              {loggedIn && (
+                <button
+                  type="button"
+                  className={styles.logoutButton}
+                  onClick={() => setShowLogoutModal(true)}
+                >
+                  Log Out
+                </button>
+              )}
+
             </div>
           </div>
         </nav >
       </header >
+      <ConfirmLogoutModal
+        open={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+      />
     </>
   )
 

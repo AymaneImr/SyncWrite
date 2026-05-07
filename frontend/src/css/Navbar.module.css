@@ -65,6 +65,8 @@
 .navAuth {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .signIn {
@@ -86,4 +88,19 @@
   border: none;
   cursor: pointer;
 
+}
+
+.logoutButton {
+  padding: 0.55rem 1rem;
+  border: 1px solid #d7dcec;
+  border-radius: 999px;
+  background: white;
+  color: oklch(0.372 0.044 257.287);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background: #f8fafc;
 }

@@ -14,11 +14,13 @@ import styles from "../css/TextEditor.module.css";
 import { useEffect, useState } from "react";
 import OnlineEditors, { useCollaborators, type OnlineUser } from "./OnlineEditors";
 import MenuBar from "./MenuBar";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { updatedAgo, type DocumentItem } from "./ExistingDocuments";
 import RemoteSelections from "./RemoteSelections";
 import Color from "@tiptap/extension-color";
+import { logoutUser } from "../common/logout";
+import ConfirmLogoutModal from "./ConfirmLogoutModal";
 
 type ActivityToast = {
   id: number;
@@ -177,6 +179,7 @@ export default function TextEditor() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [showOnlinePanel, setShowOnlinePanel] = useState(true);
   const [activityToast, setActivityToast] = useState<ActivityToast | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const activityTimerRef = useRef<number | null>(null);
 
   // Throttling + remote-apply guard to prevent update loops
@@ -200,6 +203,7 @@ export default function TextEditor() {
 
   // Active WebSocket connection for live collaboration
   const socketRef = useRef<WebSocket | null>(null);
+  const navigate = useNavigate();
 
   // get the document_id from the url
   const { link } = useParams<{ link?: string }>();
@@ -596,6 +600,13 @@ export default function TextEditor() {
 
   };
 
+  const handleLogout = async () => {
+    socketRef.current?.close();
+    await logoutUser(token);
+    setShowLogoutModal(false);
+    navigate("/login", { replace: true });
+  };
+
   return (
 
     <div className={styles.pageWrapper}>
@@ -616,13 +627,32 @@ export default function TextEditor() {
         </div>
 
         {isOwner && (
-          <div
-            className={styles.btn}
-            role="button"
-            onClick={() => SetshowEndSessionModal(true)}
+          <>
+            <div
+              className={styles.btn}
+              role="button"
+              onClick={() => SetshowEndSessionModal(true)}
+            >
+              <LogOut size={17} /> End Session
+            </div>
+            <button
+              type="button"
+              className={styles.logoutBtn}
+              onClick={() => setShowLogoutModal(true)}
+            >
+              Log out
+            </button>
+          </>
+        )}
+
+        {!isOwner && (
+          <button
+            type="button"
+            className={styles.logoutBtn}
+            onClick={() => setShowLogoutModal(true)}
           >
-            <LogOut size={17} /> End Session
-          </div>
+            Log out
+          </button>
         )}
 
       </div>
@@ -724,6 +754,12 @@ export default function TextEditor() {
           </div>
         </div>
       )}
+
+      <ConfirmLogoutModal
+        open={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+      />
 
       {activityToast && (
         <div className={styles.activityToast} key={activityToast.id}>
