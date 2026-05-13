@@ -17,7 +17,7 @@ func openTestDB(t *testing.T, schemaPrefix string) *gorm.DB {
 	t.Helper()
 
 	testutils.EnvTest = &testutils.ConfigTest{
-		DB_URL: "postgres://dev:test_pass@localhost:5432/doc_editor_db_test",
+		DB_URL: "postgres://dev:test_pass@localhost:5431/doc_editor_db_test",
 	}
 
 	testDB, err := gorm.Open(postgres.Open(testutils.EnvTest.DB_URL), &gorm.Config{})

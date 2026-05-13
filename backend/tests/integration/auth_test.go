@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -660,3 +661,117 @@ func TestConfirmPasswordReset(t *testing.T) {
 	}
 
 }
+
+func TestLogout(t *testing.T) {
+
+	cases := []TestCases{
+		{
+			name:         "success",
+			expectStatus: http.StatusOK,
+			expectKey:    "message",
+			expectValue:  "Logged out successfully",
+		},
+		{
+			name:         "session expired or revoked",
+			expectStatus: http.StatusUnauthorized,
+			expectKey:    "error",
+			expectValue:  "Session expired or revoked",
+		},
+	}
+
+	config.Env = &config.Config{
+		JWT_SECRET:     "jwt-secret",
+		REFRESH_SECRET: "refresh-secret",
+	}
+
+	r := testutils.Route{
+		Method:   "POST",
+		Endpoint: "/api/auth/logout",
+		Handler: func(r *gin.Context) {
+			utils.Auth()(r)
+			if r.IsAborted() {
+				return
+			}
+			handlers.Logout(r)
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testDB := openMigratedTestDB(t, "test_logout")
+			router := setupRouter(r)
+
+			test_password := "password.123"
+			hashed_password, err := bcrypt.GenerateFromPassword([]byte(test_password), bcrypt.DefaultCost)
+			if err != nil {
+				t.Fatalf("failed to hash password: %v", err)
+			}
+
+			user := &models.User{
+				Username: "test_user",
+				Email:    "test_user@example.com",
+				Password: string(hashed_password),
+				IsActive: false,
+			}
+
+			if err := testDB.Create(&user).Error; err != nil {
+				t.Fatalf("failed to create user: %v", err)
+			}
+
+			accessToken, err := utils.GenerateAccessToken(user.ID, config.Env.JWT_SECRET)
+			refreshToken, err := utils.GenerateRefreshToken(user.ID, config.Env.REFRESH_SECRET)
+
+			userSession := models.UserSession{
+				UserID:       user.ID,
+				Token:        accessToken,
+				RefreshToken: refreshToken,
+				IpAddress:    "127.0.0.1",
+				UserAgent:    "logout-test",
+				CreatedAt:    time.Now().Unix(),
+				ExpiresAt:    time.Now().Add(30 * 24 * time.Hour).Unix(),
+				IsRevoked:    false,
+			}
+
+			if tc.name == "success" {
+				if err := testDB.Create(&userSession).Error; err != nil {
+					t.Fatalf("failed to create user session: %v", err)
+				}
+			}
+
+			req := httptest.NewRequest(r.Method, r.Endpoint, nil)
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectStatus {
+				t.Fatalf("expected %d, got %d", tc.expectStatus, rec.Code)
+			}
+
+			var res map[string]string
+			if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+				t.Fatalf("failed to unmarshal response body: %v", err)
+			}
+
+			if res[tc.expectKey] != tc.expectValue {
+				t.Fatalf("expected %q, got %q", tc.expectValue, res[tc.expectKey])
+			}
+
+			if tc.name != "success" {
+				return
+			}
+
+			var storedSession models.UserSession
+			if err := testDB.First(&storedSession, userSession.ID).Error; err != nil {
+				t.Fatalf("failed to reload user session: %v", err)
+			}
+
+			if !storedSession.IsRevoked {
+				t.Fatal("expected session to be revoked after logout")
+			}
+
+		})
+	}
+
+}
+

@@ -13,15 +13,14 @@ func RegisterRoutes(r *gin.Engine) {
 	// Auth routes
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/login", handlers.Login) // works
+		auth.POST("/login", handlers.Login) //  TESTED
 		auth.GET("/google/login", handlers.OauthLogin)
-		auth.GET("/google/oauth", handlers.Oauth)
 		auth.GET("/google/callback", handlers.OauthCallback)
-		auth.POST("/register", handlers.RegisterUser) // works
-		auth.POST("/password-reset/request", handlers.RequestPasswordReset)
-		auth.GET("/password-reset/verify", handlers.VerifyPasswordResetToken)
-		auth.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
-		auth.POST("/logout", utils.Auth(), handlers.Logout) // works
+		auth.POST("/register", handlers.RegisterUser)                         // TESTED
+		auth.POST("/password-reset/request", handlers.RequestPasswordReset)   // TESTED
+		auth.GET("/password-reset/verify", handlers.VerifyPasswordResetToken) // TESTED
+		auth.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)   // TESTED
+		auth.POST("/logout", utils.Auth(), handlers.Logout)                   // TESTED
 	}
 
 	// Document routes
