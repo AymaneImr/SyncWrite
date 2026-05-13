@@ -26,18 +26,18 @@ func DocumentAccess() gin.HandlerFunc {
 			return
 		}
 
-		if !HasActiveDocumentSession(userID, doc.ID) {
-			r.JSON(http.StatusUnauthorized, gin.H{"error": "Document session expired"})
-			return
-		}
-
-		// Check if user is the OWNER of the document
+		// Check if user is the OWNER of the document (owners don't need active session)
 		if doc.OwnerID == userID {
-
 			// User IS the owner
 			r.Set("access_level", "owner")
 			r.Set("document", doc)
 			r.Next()
+			return
+		}
+
+		// Not owner → check if they have an active session
+		if !HasActiveDocumentSession(userID, doc.ID) {
+			r.JSON(http.StatusUnauthorized, gin.H{"error": "Document session expired"})
 			return
 		}
 
@@ -50,10 +50,9 @@ func DocumentAccess() gin.HandlerFunc {
 			return
 		}
 
-		// 5. User is collaborator → set permission
+		// User is collaborator → set permission
 		r.Set("access_level", collaborator.Permission)
 		r.Set("document", doc)
 		r.Next()
 	}
 }
-
