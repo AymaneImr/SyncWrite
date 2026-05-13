@@ -42,19 +42,37 @@ export default function ExistingDocuments({ onBack }: Props) {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [searchQuery, SetSearchQuery] = useState("");
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const token = localStorage.getItem("access_token");
 
   useEffect(() => {
     const loadDocs = async () => {
-      const res = await fetch("http://localhost:8080/api/documents/loadAll", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch("http://localhost:8080/api/documents/loadAll", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      setDocuments(data.documents);
+        if (!res.ok) {
+          const errText = (await res.text()) || res.statusText;
+          throw new Error(errText || "Unable to load documents.");
+        }
+
+        const data = await res.json();
+        setDocuments(data.documents);
+      } catch (error) {
+        console.error(error);
+        setDocuments([]);
+        setStatus({
+          type: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unable to load your documents right now. Please try again.',
+        });
+      }
     };
 
     loadDocs();
@@ -64,10 +82,11 @@ export default function ExistingDocuments({ onBack }: Props) {
     id: string,
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
-    const load = async () => {
-      e.stopPropagation();
-      e.preventDefault();
+    e.stopPropagation();
+    e.preventDefault();
+    setStatus(null);
 
+    try {
       const res = await fetch(`http://localhost:8080/api/documents/${id}/delete`, {
         method: "DELETE",
         headers: {
@@ -77,13 +96,44 @@ export default function ExistingDocuments({ onBack }: Props) {
       });
 
       if (!res.ok) {
-        console.error(await res.text());
+        let errText = res.statusText;
+
+        try {
+          const text = await res.text();
+          if (text) {
+            try {
+              const data = JSON.parse(text);
+              if (typeof data === 'object' && data !== null) {
+                errText =
+                  typeof data.error === 'string'
+                    ? data.error
+                    : typeof data.message === 'string'
+                      ? data.message
+                      : text;
+              }
+            } catch {
+              errText = text;
+            }
+          }
+        } catch {
+          // fallback to status text
+        }
+
+        throw new Error(errText || 'Unable to delete the document.');
       }
 
-      setDocuments((prev) => prev.filter((doc) => doc.id !== id))
-    };
-
-    load()
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+      setStatus({ type: 'success', message: 'Document deleted successfully.' });
+    } catch (error) {
+      console.error(error);
+      setStatus({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to delete the document. Please try again.',
+      });
+    }
   }
 
   const filteredDocs = useMemo(() => {
@@ -134,6 +184,12 @@ export default function ExistingDocuments({ onBack }: Props) {
           Clear
         </button>
       </div>
+
+      {status && (
+        <div className={`${styles.status} ${status.type === 'error' ? styles.statusError : styles.statusSuccess}`}>
+          {status.message}
+        </div>
+      )}
 
       <div className={styles.list}>
         {filteredDocs.length === 0 && (

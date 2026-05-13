@@ -69,6 +69,16 @@
   transform: translateY(-1px);
 }
 
+.errorBanner {
+  width: 100%;
+  padding: 14px 16px;
+  background: #fef2f2;
+  color: #991b1b;
+  border-bottom: 1px solid #fecaca;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
 .sidebar {
   width: 260px;
   flex-shrink: 0;

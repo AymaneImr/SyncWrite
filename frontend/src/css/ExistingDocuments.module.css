@@ -164,3 +164,22 @@
   font-size: 13px;
   color: #64748b;
 }
+
+.status {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+}
+
+.statusError {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.statusSuccess {
+  background: #ecfdf5;
+  color: #0f5132;
+  border: 1px solid #bbf7d0;
+}

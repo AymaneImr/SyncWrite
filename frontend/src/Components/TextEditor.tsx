@@ -175,6 +175,7 @@ export default function TextEditor() {
   const [token, setToken] = useState<string | null>(null);
   const [id, setId] = useState("")
   const [showEndSessionModal, SetshowEndSessionModal] = useState(false)
+  const [loadError, setLoadError] = useState("");
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [showOnlinePanel, setShowOnlinePanel] = useState(true);
@@ -234,23 +235,34 @@ export default function TextEditor() {
   useEffect(() => {
     if (!token || !link) return;
     const load = async () => {
+      setLoadError("");
 
-      const res = await fetch(`http://localhost:8080/api/documents/link/${link?.trim()}/load`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      try {
+        const res = await fetch(`http://localhost:8080/api/documents/link/${link?.trim()}/load`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      if (!res.ok) {
-        console.error(await res.text());
+        if (!res.ok) {
+          const errText = (await res.text()) || res.statusText;
+          throw new Error(errText || 'Unable to load the shared document.');
+        }
+
+        const data = await res.json();
+        setDoc(data.document);
+      } catch (error) {
+        console.error(error);
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load this document right now. Please try again.'
+        );
       }
+    };
 
-      const data = await res.json();
-      setDoc(data.document)
-    }
-
-    load()
+    load();
   }, [token, link]);
   const pushActivityToast = (message: string, accent: string) => {
     if (activityTimerRef.current) {
@@ -610,6 +622,9 @@ export default function TextEditor() {
   return (
 
     <div className={styles.pageWrapper}>
+      {loadError && (
+        <div className={styles.errorBanner}>{loadError}</div>
+      )}
       <div className={styles.docInfoMenu}>
 
         <div className={styles.docInfo}>

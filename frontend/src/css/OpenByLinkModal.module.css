@@ -92,3 +92,9 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.error {
+  margin-top: 8px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}

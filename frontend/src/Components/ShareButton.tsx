@@ -13,7 +13,9 @@ import { useState } from "react";
 
 export default function ShareDialog({ id, token, link }: { id?: string, token: string | null, link: string }) {
   const [emailInput, setEmailInput] = useState("");
-  const [roleInput, setRoleInput] = useState<"read-only" | "read-only">("read-only");
+  const [roleInput, setRoleInput] = useState<"read-only" | "read-write">("read-only");
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
 
   const [users, setUsers] = useState([
     // just for development
@@ -36,10 +38,21 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
     setEmailInput("");
   };
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
+    if (!emailInput.trim()) {
+      setStatus({ type: 'error', message: 'Please enter an email address before inviting.' });
+      return;
+    }
 
-    const load = async () => {
+    if (!id || !token) {
+      setStatus({ type: 'error', message: 'Unable to invite collaborators right now.' });
+      return;
+    }
 
+    setStatus(null);
+    setIsInviting(true);
+
+    try {
       const res = await fetch(`http://localhost:8080/api/documents/${id}/invite`, {
         method: "POST",
         headers: {
@@ -48,22 +61,45 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
         },
         body: JSON.stringify({
           email: emailInput,
-          permission: roleInput
-        })
+          permission: roleInput,
+        }),
       });
 
-      if (res.ok) {
-        addUser()
-      }
       if (!res.ok) {
-        const err = await res.text();
-        console.log("err: ", err);
+        let errText = res.statusText;
 
+        try {
+          const data = await res.json();
+          if (typeof data === 'object' && data !== null) {
+            errText =
+              typeof data.error === 'string'
+                ? data.error
+                : typeof data.message === 'string'
+                  ? data.message
+                  : JSON.stringify(data);
+          }
+        } catch {
+          errText = (await res.text()) || res.statusText;
+        }
+
+        throw new Error(errText || 'Failed to invite collaborator.');
       }
-    }
 
-    load()
-  }
+      addUser();
+      setStatus({ type: 'success', message: 'Invite sent successfully.' });
+    } catch (error) {
+      console.error('Invite error:', error);
+      setStatus({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to send invite. Please try again.',
+      });
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
   return (
     <Dialog>
@@ -97,10 +133,16 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
             <option value="read-only">Viewer</option>
             <option value="read-write">Editor</option>
           </select>
-          <button className={styles.inviteButton} onClick={handleInvite}>
-            Invite
+          <button className={styles.inviteButton} onClick={handleInvite} disabled={isInviting} type="button">
+            {isInviting ? 'Sending...' : 'Invite'}
           </button>
         </div>
+
+        {status && (
+          <div className={`${styles.status} ${status.type === 'error' ? styles.statusError : styles.statusSuccess}`}>
+            {status.message}
+          </div>
+        )}
 
         <div className={styles.accessList}>
           {users.map((u) => (
@@ -133,7 +175,18 @@ export default function ShareDialog({ id, token, link }: { id?: string, token: s
           <input readOnly value={link} />
           <button
             className={styles.copyBtn}
-            onClick={() => navigator.clipboard.writeText(link)}
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(link);
+                setStatus({ type: 'success', message: 'Link copied to clipboard.' });
+              } catch (error) {
+                console.error('Copy error:', error);
+                setStatus({
+                  type: 'error',
+                  message: 'Unable to copy the link. Please copy it manually.',
+                });
+              }
+            }}
           >
             <Copy size={18} />
           </button>

@@ -19,12 +19,19 @@ export default function DocsPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [status, setStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [linkModalError, setLinkModalError] = useState('');
 
   const token = localStorage.getItem('access_token');
   const navigate = useNavigate();
 
   const createAndOpenDocument = async (title: string, content?: TipTapDocument) => {
-    if (!token) return;
+    if (!token) {
+      throw new Error('You must be signed in to create a document.');
+    }
 
     const res = await fetch('http://localhost:8080/api/documents/create', {
       method: 'POST',
@@ -36,16 +43,15 @@ export default function DocsPage() {
     });
 
     if (!res.ok) {
-      console.error(await res.text());
-      return;
+      const errText = (await res.text()) || res.statusText;
+      throw new Error(errText || 'Unable to create a new document.');
     }
 
     const data = await res.json();
     const link = data?.document?.link;
 
     if (!link) {
-      console.error('Document created but no link was returned');
-      return;
+      throw new Error('Document created but no link was returned.');
     }
 
     navigate(`/editor/${link}`);
@@ -54,6 +60,7 @@ export default function DocsPage() {
   const handleTextUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     e.target.value = '';
+    setStatus(null);
 
     if (!file) return;
 
@@ -64,18 +71,32 @@ export default function DocsPage() {
     } catch (error) {
       console.error(error);
       setUploadedFile(null);
-      alert(
-        error instanceof Error
-          ? error.message
-          : 'The file could not be parsed. Please try a .txt, .pdf, or .docx file.'
-      );
+      setStatus({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'The file could not be parsed. Please try a .txt, .pdf, or .docx file.',
+      });
     }
   };
 
   const handleOpenByDoc = async (link: string) => {
-    if (!link || !token) return;
+    const trimmedLink = link.trim();
+    setLinkModalError('');
+    setStatus(null);
 
-    const res = await fetch(`http://localhost:8080/api/documents/link/${link}/open`, {
+    if (!trimmedLink) {
+      setLinkModalError('Please enter a valid document link.');
+      return;
+    }
+
+    if (!token) {
+      setStatus({ type: 'error', message: 'Unable to open the document. Please sign in again.' });
+      return;
+    }
+
+    const res = await fetch(`http://localhost:8080/api/documents/link/${trimmedLink}/open`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -83,21 +104,58 @@ export default function DocsPage() {
     });
 
     if (!res.ok) {
-      console.error(await res.text());
+      let errText = res.statusText;
+
+      try {
+        const text = await res.text();
+        if (text) {
+          try {
+            const data = JSON.parse(text);
+            if (typeof data === 'object' && data !== null) {
+              errText =
+                typeof data.error === 'string'
+                  ? data.error
+                  : typeof data.message === 'string'
+                    ? data.message
+                    : text;
+            }
+          } catch {
+            errText = text;
+          }
+        }
+      } catch {
+        // fallback to status text
+        // implement later 
+      }
+
+      setLinkModalError(errText || 'Unable to open that document link.');
+      console.error(errText);
       return;
     }
 
-    navigate(`/editor/${link}`);
+    navigate(`/editor/${trimmedLink}`);
     setShowLinkModal(false);
   };
 
   const handleCreateDocument = async (title: string) => {
-    await createAndOpenDocument(title, {
-      type: 'doc' as const,
-      content: [{ type: 'paragraph' }],
-    });
+    setStatus(null);
 
-    setShowCreateModal(false);
+    try {
+      await createAndOpenDocument(title, {
+        type: 'doc' as const,
+        content: [{ type: 'paragraph' }],
+      });
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error(error);
+      setStatus({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to create a new document. Please try again.',
+      });
+    }
   };
 
   return (
@@ -136,6 +194,12 @@ export default function DocsPage() {
               Pick a workflow below to create, import, reopen, or join a document instantly.
             </p>
 
+            {status && (
+              <div className={`${styles.status} ${status.type === 'error' ? styles.statusError : styles.statusSuccess}`}>
+                {status.message}
+              </div>
+            )}
+
             <div className={styles.grid}>
               <Cards
                 title="Text Document"
@@ -172,6 +236,8 @@ export default function DocsPage() {
             onOpen={(link) => {
               handleOpenByDoc(link);
             }}
+            error={linkModalError}
+            onErrorChange={setLinkModalError}
           />
         )}
 

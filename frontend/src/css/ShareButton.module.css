@@ -168,6 +168,25 @@
   font-weight: 500;
 }
 
+.status {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.statusError {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+.statusSuccess {
+  color: #064e3b;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+}
+
 .shareButton {
   display: inline-flex;
   align-items: center;

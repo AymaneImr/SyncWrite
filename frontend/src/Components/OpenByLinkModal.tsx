@@ -1,15 +1,29 @@
-import { useNavigate } from "react-router-dom";
 import styles from "../css/OpenByLinkModal.module.css";
 import { useState } from "react";
 
 type Props = {
   onClose: () => void;
   onOpen: (link: string) => void;
+  error?: string;
+  onErrorChange?: (value: string) => void;
 };
 
-export default function OpenByLinkModal({ onClose, onOpen }: Props) {
+export default function OpenByLinkModal({ onClose, onOpen, error: externalError, onErrorChange }: Props) {
   const [link, setLink] = useState("");
+  const [error, setError] = useState("");
 
+  const handleOpen = () => {
+    const trimmedLink = link.trim();
+    if (!trimmedLink) {
+      setError('Please enter a valid link.');
+      onErrorChange?.('');
+      return;
+    }
+
+    setError("");
+    onErrorChange?.("");
+    onOpen(trimmedLink);
+  };
 
   return (
     <div className={styles.overlay}>
@@ -29,8 +43,15 @@ export default function OpenByLinkModal({ onClose, onOpen }: Props) {
           className={styles.input}
           placeholder="https://example.com/document"
           value={link}
-          onChange={(e) => setLink(e.target.value)}
+          onChange={(e) => {
+            setLink(e.target.value);
+            setError("");
+            onErrorChange?.("");
+          }}
         />
+        {(error || externalError) && (
+          <p className={styles.error}>{error || externalError}</p>
+        )}
 
         <div className={styles.actions}>
           <button className={styles.cancel} onClick={onClose}>
@@ -38,7 +59,7 @@ export default function OpenByLinkModal({ onClose, onOpen }: Props) {
           </button>
           <button
             className={styles.open}
-            onClick={() => onOpen(link)}
+            onClick={handleOpen}
             disabled={!link}
           >
             Open Document
