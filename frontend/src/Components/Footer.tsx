@@ -26,7 +26,7 @@ export default function Footer() {
       <div className={styles.inner}>
         <div className={styles.top}>
           <div className={styles.brandColumn}>
-            <Link className={styles.logoLink} to="/landing-page">
+            <Link className={styles.logoLink} to="/">
               <span className={styles.logoMark}>
                 <FileText size={22} />
               </span>

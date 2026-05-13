@@ -18,9 +18,9 @@ function App() {
           <Route path="/login" element={<Auth />} />
           <Route path="/oauth/google/callback" element={<GoogleOauthCallback />} />
           <Route path="/reset-password" element={<ForgotPassword mode="reset" />} />
-          <Route path="/document-type" element={<ProtectedRoute> <DocsPage /> </ProtectedRoute>} />
+          <Route path="/documents" element={<ProtectedRoute> <DocsPage /> </ProtectedRoute>} />
           <Route path="/editor/:link" element={<ProtectedRoute> <TextEditor /> </ProtectedRoute>} />
-          <Route path="/landing-page" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
         </Routes>
       </main>
     </>

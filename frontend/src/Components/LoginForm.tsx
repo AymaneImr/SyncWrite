@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "../css/Login.module.css";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, User, Chrome } from "lucide-react";
+import { Mail, Lock, User, Chrome, Sparkles, ShieldCheck, Wand2 } from "lucide-react";
 import ForgotPassword from "./ForgotPassword";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -66,7 +66,7 @@ const LoginForm: React.FC = () => {
         localStorage.setItem("access_token", data.access_token);
         console.log(data.access_token);
 
-        navigate("/landing-page");
+        navigate("/");
 
       } else {
         setMessage(data.error || "Invalid credentials or form data.");
@@ -83,126 +83,151 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.icon}>✨</div>
-        <h2 className={styles.title}>Welcome Back</h2>
-        <p className={styles.subtitle}>Login to continue</p>
-      </div>
-
-      <div className={styles.card}>
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${isLogin ? styles.active : ""}`}
-            onClick={() => toggleForm(true)}
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${!isLogin ? styles.active : ""}`}
-            onClick={() => toggleForm(false)}
-          >
-            Register
-          </button>
-        </div>
-
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          {!isLogin && (
-            <div className={styles.inputGroup}>
-              <User size={18} className={styles.iconInput} />
-              <Input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className={styles.inputGroup}>
-            <Mail size={18} className={styles.iconInput} />
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+      <div className={styles.shell}>
+        <section className={styles.introPanel}>
+          <div className={styles.introBadge}>
+            <Sparkles size={16} /> Modern collaborative writing
           </div>
-
-          <div className={styles.inputGroup}>
-            <Lock size={18} className={styles.iconInput} />
-            <Input
-              type="password"
-              placeholder="********"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {!isLogin && (
-            <div className={styles.inputGroup}>
-              <Lock size={18} className={styles.iconInput} />
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          )}
-
-          {isLogin && (
-            <div className={styles.forgot}>
-              <ForgotPassword />
-            </div>
-          )}
-
-          {message && (
-            <p
-              style={{
-                textAlign: "center",
-                color: message.includes("Success") ? "green" : "red",
-                fontSize: "0.85rem",
-              }}
-            >
-              {message}
-            </p>
-          )}
-
-          <Button type="submit" className={styles.gradientButton}>
-            {isLogin ? "Login" : "Sign Up"}
-          </Button>
-
-          <div className={styles.divider}>
-            <span>Or continue with Google</span>
-          </div>
-
-          <div className={styles.oauth}>
-            <button
-              type="button"
-              className={styles.oauthBtn}
-              onClick={handleGoogleLogin}
-            >
-              <Chrome size={18} /> Continue with Google
-
-            </button>
-          </div>
-
-          <p className={styles.footerText}>
-            {isLogin ? (
-              <>
-                Don’t have an account?{" "}
-                <span onClick={() => toggleForm(false)}>Register here</span>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <span onClick={() => toggleForm(true)}>Login here</span>
-              </>
-            )}
+          <h1 className={styles.introTitle}>
+            Focus on the draft.
+            <span> Let SyncWrite handle the flow.</span>
+          </h1>
+          <p className={styles.introText}>
+            Create, review, and refine documents with a workspace built for live
+            collaboration, clean organization, and less friction.
           </p>
-        </form>
+          <div className={styles.introPoints}>
+            <div className={styles.introPoint}>
+              <ShieldCheck size={18} />
+              Secure sharing and access control
+            </div>
+            <div className={styles.introPoint}>
+              <Wand2 size={18} />
+              Fast onboarding for new drafts
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.authPanel}>
+          <div className={styles.header}>
+            <div className={styles.icon}>✨</div>
+            <h2 className={styles.title}>{isLogin ? "Welcome Back" : "Create Your Account"}</h2>
+            <p className={styles.subtitle}>
+              {isLogin ? "Log in to continue your work" : "Start collaborating in minutes"}
+            </p>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.tabs}>
+              <button
+                type="button"
+                className={`${styles.tab} ${isLogin ? styles.active : ""}`}
+                onClick={() => toggleForm(true)}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                className={`${styles.tab} ${!isLogin ? styles.active : ""}`}
+                onClick={() => toggleForm(false)}
+              >
+                Register
+              </button>
+            </div>
+            <form className={styles.form} onSubmit={handleSubmit} noValidate>
+              {!isLogin && (
+                <div className={styles.inputGroup}>
+                  <User size={18} className={styles.iconInput} />
+                  <Input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className={styles.inputGroup}>
+                <Mail size={18} className={styles.iconInput} />
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <Lock size={18} className={styles.iconInput} />
+                <Input
+                  type="password"
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              {!isLogin && (
+                <div className={styles.inputGroup}>
+                  <Lock size={18} className={styles.iconInput} />
+                  <Input
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {isLogin && (
+                <div className={styles.forgot}>
+                  <ForgotPassword />
+                </div>
+              )}
+
+              {message && (
+                <p
+                  className={`${styles.message} ${message.includes("Success") ? styles.success : styles.error
+                    }`}
+                >
+                  {message}
+                </p>
+              )}
+
+              <Button type="submit" className={styles.gradientButton}>
+                {isLogin ? "Login" : "Sign Up"}
+              </Button>
+
+              <div className={styles.divider}>
+                <span>Or continue with Google</span>
+              </div>
+
+              <div className={styles.oauth}>
+                <button
+                  type="button"
+                  className={styles.oauthBtn}
+                  onClick={handleGoogleLogin}
+                >
+                  <Chrome size={18} /> Continue with Google
+                </button>
+              </div>
+
+              <p className={styles.footerText}>
+                {isLogin ? (
+                  <>
+                    Don&apos;t have an account?{" "}
+                    <span onClick={() => toggleForm(false)}>Register here</span>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <span onClick={() => toggleForm(true)}>Login here</span>
+                  </>
+                )}
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
 
       <p className={styles.terms}>

@@ -25,7 +25,7 @@ export default function NavBar() {
         <nav className={styles.navBar} >
           <div className={styles.navContainer}>
             <div className={styles.logoDiv}>
-              <Link className={styles.logoLink} to="/landing-page">
+              <Link className={styles.logoLink} to="/">
                 <div className={styles.logo}>
                   <FileText size={22} />
                 </div>
@@ -34,12 +34,17 @@ export default function NavBar() {
             </div>
 
             <ul className={styles.navLinks}>
-              <li><Link to="/landing-page">Features</Link></li>
+              <li><Link to="/">Features</Link></li>
               <li><Link to="/docs">Docs</Link></li>
               <li><Link to="/about">About</Link></li>
             </ul>
 
             <div className={styles.navAuth}>
+              {loggedIn && (
+                <Link className={styles.workspaceLink} to="/documents">
+                  Open Workspace
+                </Link>
+              )}
 
               {
                 !loggedIn && (

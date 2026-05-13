@@ -4,72 +4,162 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: radial-gradient(circle at 20% 20%, #f0e3ff, #f8f3ff);
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(59, 130, 246, 0.16), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(217, 70, 239, 0.16), transparent 30%),
+    linear-gradient(180deg, #f8f7ff 0%, #f8fbff 100%);
+}
+
+.shell {
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 470px);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.introPanel {
+  padding: 2.2rem;
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at top right, rgba(191, 219, 254, 0.42), transparent 30%),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96));
+  color: #f8fafc;
+  box-shadow: 0 34px 70px -40px rgba(15, 23, 42, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.introBadge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.4rem;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.introTitle {
+  margin: 1.4rem 0 1rem;
+  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
+  line-height: 1;
+  color: #ffffff;
+}
+
+.introTitle span {
+  display: block;
+  background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 55%, #f9a8d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.introText {
+  max-width: 34rem;
+  margin: 0 0 1.8rem;
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.introPoints {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.introPoint {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(248, 250, 252, 0.92);
+  font-weight: 600;
+}
+
+.authPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .header {
-  margin-top: 1.5rem;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .icon {
   font-size: 2rem;
-  background: linear-gradient(to right, #b14cff, #f04fc0);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 58%, #ec4899 100%);
   color: white;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
+  border-radius: 16px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 0.8rem;
+  box-shadow: 0 20px 40px -24px rgba(124, 58, 237, 0.85);
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #b14cff;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
 .subtitle {
-  font-size: 0.9rem;
-  color: #555;
+  margin: 0.45rem 0 0;
+  font-size: 0.96rem;
+  color: #64748b;
 }
 
 .card {
-  background: white;
+  background: rgba(255, 255, 255, 0.82);
   padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  width: 440px;
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 28px 56px -38px rgba(15, 23, 42, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(18px);
 }
 
 .tabs {
   display: flex;
   justify-content: space-between;
-  background: #f8f8f8;
+  background: rgba(241, 245, 249, 0.95);
   border-radius: 9999px;
   margin-bottom: 1.5rem;
-  padding: 4px;
+  padding: 5px;
 }
 
 .tab {
   flex: 1;
-  padding: 0.6rem 0;
+  min-height: 2.9rem;
   border: none;
   background: transparent;
   border-radius: 9999px;
   cursor: pointer;
-  font-weight: 500;
-  color: #777;
+  font-weight: 700;
+  color: #64748b;
   transition: all 0.2s ease;
 }
 
 .tab.active {
   background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  color: #b14cff;
+  box-shadow: 0 16px 30px -24px rgba(15, 23, 42, 0.45);
+  color: #0f172a;
 }
 
 .form {
@@ -85,21 +175,20 @@
 .iconInput {
   position: absolute;
   top: 50%;
-  left: 12px;
+  left: 14px;
   transform: translateY(-50%);
-  color: #aaa;
+  color: #94a3b8;
 }
 
 .inputGroup input {
-  padding-left: 2.5rem;
-  border-radius: 10px;
+  padding-left: 2.8rem;
 }
 
 .gradientButton {
-  background: linear-gradient(to right, #b14cff, #f04fc0);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 58%, #ec4899 100%);
   color: white;
-  border-radius: 10px;
-  font-weight: 500;
+  border-radius: 1rem;
+  font-weight: 700;
 }
 
 .forgot {
@@ -107,17 +196,24 @@
   margin-top: -0.5rem;
 }
 
-.forgot button {
-  background: none;
-  color: #b14cff;
-  font-size: 0.85rem;
-  cursor: pointer;
+.message {
+  text-align: center;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.success {
+  color: #15803d;
+}
+
+.error {
+  color: #dc2626;
 }
 
 .divider {
   text-align: center;
   font-size: 0.85rem;
-  color: #aaa;
+  color: #94a3b8;
   position: relative;
   margin: 1rem 0;
 }
@@ -128,7 +224,7 @@
   position: absolute;
   width: 35%;
   height: 1px;
-  background: #eee;
+  background: rgba(226, 232, 240, 0.95);
   top: 50%;
   transform: translateY(-50%);
 }
@@ -152,34 +248,68 @@
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  border: 1px solid #ddd;
+  min-height: 3rem;
+  border: 1px solid rgba(203, 213, 225, 0.85);
   padding: 0.6rem 1rem;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.85rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.92rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.oauthBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(148, 163, 184, 0.9);
+  background: rgba(255, 255, 255, 1);
 }
 
 .footerText {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin-top: 1rem;
+  color: #64748b;
 }
 
 .footerText span {
-  color: #b14cff;
+  color: #2563eb;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .terms {
-  font-size: 0.8rem;
-  color: #777;
-  margin-top: 2rem;
+  font-size: 0.84rem;
+  color: #64748b;
+  margin-top: 1.5rem;
   text-align: center;
 }
 
 .terms span {
-  color: #b14cff;
+  color: #2563eb;
   cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .introPanel {
+    padding: 1.8rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    padding: 1rem 0.85rem;
+  }
+
+  .card {
+    padding: 1.35rem;
+  }
+
+  .introTitle {
+    font-size: 2.35rem;
+  }
 }

@@ -4,6 +4,7 @@ import styles from "../css/Hero.module.css";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/common/ProtectedRoute";
 import {
+  ArrowRight,
   FileUp,
   History,
   ShieldCheck,
@@ -15,6 +16,11 @@ import FeatureCard from "./FeatureCard";
 const Hero: React.FC = () => {
   const loggedIn = isAuthenticated();
   const navigate = useNavigate();
+  const stats = [
+    { value: "Live", label: "multiplayer syncing" },
+    { value: "Fast", label: "autosave and recovery" },
+    { value: "Secure", label: "sharing controls" },
+  ];
   const featureCards = [
     {
       title: "Real-time Collaboration",
@@ -53,7 +59,7 @@ const Hero: React.FC = () => {
 
   const handleStartEditing = () => {
     if (loggedIn) {
-      navigate("/document-type");
+      navigate("/documents");
     } else {
       navigate("/login");
     }
@@ -62,30 +68,66 @@ const Hero: React.FC = () => {
   return (
     <section className={styles.hero}>
       <div className={styles.content}>
-        <div className={styles.badge}>
-          <Zap size={15} color="#1d59e7" /> Real-time collaboration at lightning speed
-        </div>
+        <div className={styles.heroTop}>
+          <div className={styles.heroCopy}>
+            <div className={styles.badge}>
+              <Zap size={15} color="#2563eb" /> Real-time collaboration at lightning speed
+            </div>
 
-        <h1 className={styles.title}>
-          Write Together.
-          <br />
-          <span>In Real Time.</span>
-        </h1>
+            <h1 className={styles.title}>
+              Collaborative writing
+              <br />
+              <span>with a sharper workflow.</span>
+            </h1>
 
-        <p className={styles.subtitle}>
-          Experience seamless collaboration with your team. Edit documents
-          together, see changes instantly, and never lose track of your work.
-        </p>
+            <p className={styles.subtitle}>
+              SyncWrite brings your team into one elegant workspace for drafting,
+              reviewing, and shipping documents together without friction.
+            </p>
 
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.primaryBtn}
-            onClick={handleStartEditing}
-          >
-            Start Editing
-            <Zap size={19} color="white" />
-          </button>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={handleStartEditing}
+              >
+                Start Editing
+                <ArrowRight size={18} />
+              </button>
+            </div>
+
+            <div className={styles.statRow}>
+              {stats.map((stat) => (
+                <div key={stat.label} className={styles.statCard}>
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.previewShell}>
+            <div className={styles.previewHeader}>
+              <span className={styles.previewPill}>Team Draft</span>
+              <span className={styles.previewMeta}>12 collaborators online</span>
+            </div>
+            <div className={styles.previewBody}>
+              <div className={styles.previewLineWide} />
+              <div className={styles.previewLine} />
+              <div className={styles.previewLineMuted} />
+              <div className={styles.previewCard}>
+                <div className={styles.previewAvatarRow}>
+                  <span className={styles.avatarBlue}>A</span>
+                  <span className={styles.avatarPurple}>K</span>
+                  <span className={styles.avatarGold}>M</span>
+                </div>
+                <p>
+                  Live cursors, version history, and instant sharing keep your
+                  whole drafting flow in one calm place.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <h1 className={styles.featureTitle}>

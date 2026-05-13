@@ -22,7 +22,7 @@ export default function GoogleOauthCallback() {
 
     localStorage.setItem("access_token", accessToken);
     localStorage.setItem("refresh_token", refreshToken);
-    navigate("/landing-page", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate, searchParams]);
 
   return null;

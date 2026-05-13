@@ -93,7 +93,7 @@ export default function DocsPage() {
 
   const handleCreateDocument = async (title: string) => {
     await createAndOpenDocument(title, {
-      type: 'doc',
+      type: 'doc' as const,
       content: [{ type: 'paragraph' }],
     });
 
@@ -106,33 +106,55 @@ export default function DocsPage() {
       <div className={styles.pageWrap}>
         {!showExistingDocuments && (
           <>
-          <h1 className={styles.heading}>Start your text document</h1>
-          <p className={styles.sub}>Create a new text document or open one you already have</p>
+            <section className={styles.heroPanel}>
+              <div className={styles.heroText}>
+                <span className={styles.eyebrow}>Workspace</span>
+                <h1 className={styles.heading}>Start your next document with less friction</h1>
+                <p className={styles.sub}>
+                  Create a fresh draft, bring in an existing file, or jump back into a shared
+                  document from a link.
+                </p>
+              </div>
 
-          <div className={styles.grid}>
-            <Cards
-              title="Text Document"
-              subtitle="Work with text, PDF, and Word documents"
-              accent="blue"
-              iconBg="#d6d6ff"
-              uploadAccept=".txt,.pdf,.docx,.doc"
-              onUpload={handleTextUpload}
-              onCreate={() => setShowCreateModal(true)}
-              onOpenExisting={() => setShowExistingDocuments(true)}
-              onOpenByLink={() => setShowLinkModal(true)}
-              leftIcon={text_left_icon}
-              rightIcon={text_right_icon}
-            />
-          </div>
+              <div className={styles.quickStats}>
+                <div className={styles.statBox}>
+                  <strong>Import</strong>
+                  <span>TXT, PDF, DOCX, DOC</span>
+                </div>
+                <div className={styles.statBox}>
+                  <strong>Create</strong>
+                  <span>Blank collaborative drafts</span>
+                </div>
+                <div className={styles.statBox}>
+                  <strong>Open</strong>
+                  <span>Existing docs or shared links</span>
+                </div>
+              </div>
+            </section>
 
-          <p className={styles.hint}>
-            Click on a card to select your document type, then choose whether to upload an
-            existing file or create a new one.
-          </p>
+            <p className={styles.hint}>
+              Pick a workflow below to create, import, reopen, or join a document instantly.
+            </p>
 
-          {uploadedFile && (
-            <div className={styles.uploadInfo}>Uploaded text file: {uploadedFile.name}</div>
-          )}
+            <div className={styles.grid}>
+              <Cards
+                title="Text Document"
+                subtitle="Work with text, PDF, and Word documents"
+                accent="blue"
+                iconBg="#dbeafe"
+                uploadAccept=".txt,.pdf,.docx,.doc"
+                onUpload={handleTextUpload}
+                onCreate={() => setShowCreateModal(true)}
+                onOpenExisting={() => setShowExistingDocuments(true)}
+                onOpenByLink={() => setShowLinkModal(true)}
+                leftIcon={text_left_icon}
+                rightIcon={text_right_icon}
+              />
+            </div>
+
+            {uploadedFile && (
+              <div className={styles.uploadInfo}>Uploaded text file: {uploadedFile.name}</div>
+            )}
           </>
         )}
 
