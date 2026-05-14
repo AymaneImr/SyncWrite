@@ -37,6 +37,11 @@ func RegisterUser(r *gin.Context) {
 		return
 	}
 
+	if len(req.Password) < 5 {
+		r.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 5 characters long"})
+		return
+	}
+
 	if req.Password != req.ConfirmPassword {
 		r.JSON(http.StatusBadRequest, gin.H{"error": "Passwords dont match"})
 		return

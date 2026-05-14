@@ -41,6 +41,18 @@ func TestRegisterUser(t *testing.T) {
 			expectValue:  "User registered successfully",
 		},
 		{
+			name: "password length less than 5 chars",
+			body: map[string]string{
+				"username":        "test_user",
+				"email":           "test_user@example.com",
+				"password":        "1234",
+				"confirmPassword": "1234",
+			},
+			expectStatus: http.StatusBadRequest,
+			expectKey:    "error",
+			expectValue:  "Password must be at least 5 characters long",
+		},
+		{
 			name: "password mismatch",
 			body: map[string]string{
 				"username":        "test_user",
@@ -772,6 +784,5 @@ func TestLogout(t *testing.T) {
 
 		})
 	}
-
 }
 
