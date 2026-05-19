@@ -8,7 +8,6 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
-  ChevronDown,
   Code,
   List,
   ListOrdered,
@@ -26,12 +25,10 @@ type MenuBarProps = {
   token: string | null;
   link: string | undefined;
   canEdit: boolean;
-  onSave?: () => void;
+  onManualSave: () => void;
 };
 
-export default function MenuBar({ editor, id, token, link, canEdit, onSave }: MenuBarProps) {
-
-  if (!editor) return null;
+export default function MenuBar({ editor, id, token, link, canEdit, onManualSave }: MenuBarProps) {
 
   const state = useEditorState({
     editor,
@@ -53,32 +50,11 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
     }),
   });
 
+  if (!editor) return null;
+
   const handleSave = () => {
     if (!canEdit) return;
-
-    const content_js = editor.getJSON();
-    const saveContent = async () => {
-      const res = await fetch(`http://localhost:8080/api/documents/${id}/updateContent`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: content_js
-        })
-      });
-
-      if (!res.ok) {
-        const err = await res.text();
-        console.log("err: ", err);
-        return;
-      }
-
-      onSave?.();
-    }
-
-    saveContent()
+    onManualSave();
   };
 
   return (
@@ -258,7 +234,7 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
       </div>
 
       <div className={styles.toolbarActions}>
-        {!canEdit && <div className={styles.readOnlyBadge}>View only</div>}
+        {!canEdit && <div className={styles.readOnlyBadge}>Read only</div>}
 
         <button
           className={styles.saveButton}
@@ -268,7 +244,6 @@ export default function MenuBar({ editor, id, token, link, canEdit, onSave }: Me
         >
           <Save size={18} />
           <span>Save</span>
-          <ChevronDown size={16} />
         </button>
 
         <div className={styles.shareButtonWrap}>

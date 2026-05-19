@@ -1,10 +1,10 @@
 
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { FileText, LogOut, Users } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
@@ -182,6 +182,14 @@ export default function TextEditor() {
   const [activityToast, setActivityToast] = useState<ActivityToast | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const activityTimerRef = useRef<number | null>(null);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const saveInFlightRef = useRef(false);
+  const queuedAutosaveRef = useRef(false);
+  const saveDocumentRef = useRef<
+    ((reason: "auto" | "manual" | "flush", options?: { keepalive?: boolean }) => Promise<boolean>) | null
+  >(null);
+  const latestContentRef = useRef<string>("");
+  const lastSavedContentRef = useRef<string>("");
 
   // Throttling + remote-apply guard to prevent update loops
   const lastCursorSentRef = useRef<number>(0);
@@ -195,6 +203,7 @@ export default function TextEditor() {
   const EDITING_ACTIVITY_THROTTLE_MS = 2000;
   const ACTIVITY_TOAST_MS = 3000;
   const POINTER_TTL_MS = 6000;
+  const AUTOSAVE_DELAY_MS = 1500;
 
   // Remote cursor/selection overlays, keyed by user id
   const [remoteSelections, setRemoteSelections] = useState<
@@ -217,6 +226,82 @@ export default function TextEditor() {
   const canEdit = isOwner || currentCollaborator?.permission === "read-write";
   const normalizedDocContent = normalizeEditorContent(doc?.Content);
 
+  const scheduleAutosave = () => {
+    if (!canEdit || !id || !token) return;
+
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = window.setTimeout(() => {
+      void saveDocumentRef.current?.("auto");
+    }, AUTOSAVE_DELAY_MS);
+  };
+
+  const saveDocument = async (
+    reason: "auto" | "manual" | "flush",
+    options?: { keepalive?: boolean }
+  ) => {
+    if (!canEdit || !id || !token) return false;
+
+    const content = latestContentRef.current;
+    if (content === lastSavedContentRef.current) {
+      return true;
+    }
+
+    if (saveInFlightRef.current) {
+      queuedAutosaveRef.current = true;
+      return false;
+    }
+
+    saveInFlightRef.current = true;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/documents/${id}/updateContent`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: JSON.parse(content),
+        }),
+        keepalive: options?.keepalive,
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Unable to save document.");
+      }
+
+      const data = await res.json();
+      lastSavedContentRef.current = content;
+      setDoc((prev) => (prev ? { ...prev, ...data.document } : data.document));
+
+      if (latestContentRef.current !== content) {
+        queuedAutosaveRef.current = true;
+      }
+
+      if (reason === "manual") {
+        broadcastPresenceEvent("save");
+      }
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    } finally {
+      saveInFlightRef.current = false;
+
+      if (queuedAutosaveRef.current) {
+        queuedAutosaveRef.current = false;
+        scheduleAutosave();
+      }
+    }
+  };
+
+  saveDocumentRef.current = saveDocument;
+
   // EFFECT: read auth token from localStorage on mount
   useEffect(() => {
     const acc_token = localStorage.getItem("access_token") ?? null;
@@ -230,6 +315,12 @@ export default function TextEditor() {
     setId(doc.id)
 
   }, [doc?.id])
+
+  useEffect(() => {
+    const serialized = JSON.stringify(normalizedDocContent);
+    latestContentRef.current = serialized;
+    lastSavedContentRef.current = serialized;
+  }, [doc?.id, normalizedDocContent]);
 
   // EFFECT (API): load document data by share link
   useEffect(() => {
@@ -281,7 +372,7 @@ export default function TextEditor() {
     }, ACTIVITY_TOAST_MS);
   };
 
-  const broadcastPresenceEvent = (event: "editing" | "save") => {
+  const broadcastPresenceEvent = useCallback((event: "editing" | "save") => {
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -293,9 +384,9 @@ export default function TextEditor() {
         username: currentUser?.username,
       })
     );
-  };
+  }, [currentUser?.user_id, currentUser?.username]);
 
-  const broadcastMouseEvent = (event: "mouse_move" | "mouse_leave", x?: number, y?: number) => {
+  const broadcastMouseEvent = useCallback((event: "mouse_move" | "mouse_leave", x?: number, y?: number) => {
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -316,7 +407,7 @@ export default function TextEditor() {
         to: normalizedY,
       })
     );
-  };
+  }, [currentUser?.user_id, currentUser?.username]);
 
   const editor = useEditor({
     extensions,
@@ -326,6 +417,11 @@ export default function TextEditor() {
     onUpdate: ({ editor }) => {
       if (!canEdit) return;
       if (isApplyingRemoteRef.current) return;
+
+      latestContentRef.current = JSON.stringify(editor.getJSON());
+      if (latestContentRef.current !== lastSavedContentRef.current) {
+        scheduleAutosave();
+      }
 
       const now = Date.now();
       if (now - lastContentSentRef.current < CONTENT_THROTTLE_MS) {
@@ -357,10 +453,6 @@ export default function TextEditor() {
     if (!editor) return;
     editor.setEditable(canEdit);
   }, [editor, canEdit]);
-
-  if (!currentUser) {
-    return <div>Loading...</div>;
-  }
 
   // EFFECT (WS): connect to document WebSocket + handle incoming messages
   useEffect(() => {
@@ -394,6 +486,9 @@ export default function TextEditor() {
         try {
           isApplyingRemoteRef.current = true;
           editor.commands.setContent(data.content);
+          const serializedRemoteContent = JSON.stringify(normalizeEditorContent(data.content));
+          latestContentRef.current = serializedRemoteContent;
+          lastSavedContentRef.current = serializedRemoteContent;
         } finally {
           isApplyingRemoteRef.current = false;
         }
@@ -489,6 +584,10 @@ export default function TextEditor() {
       if (activityTimerRef.current) {
         window.clearTimeout(activityTimerRef.current);
       }
+
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+      }
     };
   }, []);
 
@@ -498,6 +597,29 @@ export default function TextEditor() {
     editor.commands.setContent(normalizedDocContent);
 
   }, [editor, normalizedDocContent]);
+
+  useEffect(() => {
+    if (!canEdit || !id || !token) return;
+
+    const flushPendingChanges = () => {
+      if (latestContentRef.current === lastSavedContentRef.current) return;
+      void saveDocumentRef.current?.("flush", { keepalive: true });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushPendingChanges();
+      }
+    };
+
+    window.addEventListener("pagehide", flushPendingChanges);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", flushPendingChanges);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [canEdit, id, token]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -529,7 +651,7 @@ export default function TextEditor() {
   useEffect(() => {
     if (!editor || !socketRef.current) return
 
-    const handleSelectionUpdate = ({ editor }: any) => {
+    const handleSelectionUpdate = ({ editor }: { editor: Editor }) => {
 
       const now = Date.now();
       if (now - lastCursorSentRef.current < CURSOR_THROTTLE_MS) return;
@@ -586,7 +708,11 @@ export default function TextEditor() {
       container.removeEventListener("mousemove", handleMouseMove);
       container.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [currentUser?.user_id, currentUser?.username, id]);
+  }, [broadcastMouseEvent, id]);
+
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
 
   const handleEndSession = async () => {
     if (!id || !token) return;
@@ -674,11 +800,16 @@ export default function TextEditor() {
       <div className={styles.menuBarWrapper}>
         <MenuBar
           editor={editor}
-          id={id}
-          token={token}
           link={link}
           canEdit={canEdit}
-          onSave={() => broadcastPresenceEvent("save")}
+          onManualSave={() => {
+            if (autosaveTimerRef.current) {
+              window.clearTimeout(autosaveTimerRef.current);
+              autosaveTimerRef.current = null;
+            }
+
+            void saveDocumentRef.current?.("manual");
+          }}
         />
       </div>
 
