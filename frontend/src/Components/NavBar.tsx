@@ -19,6 +19,16 @@ export default function NavBar() {
     navigate("/login", { replace: true });
   };
 
+  const handleFeaturesClick = () => {
+    if (window.location.pathname === "/") {
+      document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.history.replaceState(null, "", "/#features");
+      return;
+    }
+
+    navigate("/#features");
+  };
+
   return (
     <>
       <header>
@@ -34,7 +44,11 @@ export default function NavBar() {
             </div>
 
             <ul className={styles.navLinks}>
-              <li><Link to="/">Features</Link></li>
+              <li>
+                <button type="button" className={styles.navLinkButton} onClick={handleFeaturesClick}>
+                  Features
+                </button>
+              </li>
               <li><Link to="/docs">Docs</Link></li>
               <li><Link to="/about">About</Link></li>
             </ul>

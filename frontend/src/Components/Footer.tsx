@@ -6,19 +6,25 @@ import { Link } from "react-router-dom";
 const footerGroups = [
   {
     title: "Product",
-    links: ["Features", "Security", "Roadmap"],
+    links: [
+      { label: "Features", href: "/#features" },
+      { label: "Security", href: "/security" },
+    ],
   },
   {
     title: "Resources",
-    links: ["Documentation", "Help Center", "Community"],
+    links: [
+      { label: "Documentation", href: "https://github.com/AymaneImr/SyncWrite" },
+      { label: "Help Center", href: "https://github.com/AymaneImr/SyncWrite" },
+    ],
   },
   {
     title: "Legal",
-    links: ["Privacy", "Terms", "Cookies", "Licenses"],
+    links: [
+      { label: "Licenses", href: "https://github.com/AymaneImr/SyncWrite/blob/main/LICENSE" },
+    ],
   },
 ];
-
-const legalLinks = ["Privacy Policy", "Terms of Service", "Cookie Settings"];
 
 export default function Footer() {
   return (
@@ -54,10 +60,19 @@ export default function Footer() {
                 <h3 className={styles.groupTitle}>{group.title}</h3>
                 <ul className={styles.linkList}>
                   {group.links.map((item) => (
-                    <li key={item}>
-                      <a href="/" className={styles.footerLink}>
-                        {item}
-                      </a>
+                    <li key={item.label}>
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          className={styles.footerLink}
+                          target={item.href.startsWith("http") ? "_blank" : undefined}
+                          rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+                        >
+                          {item.label}
+                        </a>
+                      ) : (
+                        <span className={styles.footerLink}>{item.label}</span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -70,14 +85,6 @@ export default function Footer() {
           <p className={styles.copyright}>
             © 2025 SyncWrite. All rights reserved.
           </p>
-
-          <div className={styles.bottomLinks}>
-            {legalLinks.map((item) => (
-              <a key={item} href="/" className={styles.bottomLink}>
-                {item}
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

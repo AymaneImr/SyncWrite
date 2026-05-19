@@ -1,7 +1,7 @@
 
 import React from "react";
 import styles from "../css/Hero.module.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/common/ProtectedRoute";
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import FeatureCard from "./FeatureCard";
 const Hero: React.FC = () => {
   const loggedIn = isAuthenticated();
   const navigate = useNavigate();
+  const location = useLocation();
   const stats = [
     { value: "Live", label: "multiplayer syncing" },
     { value: "Fast", label: "autosave and recovery" },
@@ -64,6 +65,14 @@ const Hero: React.FC = () => {
       navigate("/login");
     }
   };
+
+  React.useEffect(() => {
+    if (location.hash !== "#features") return;
+
+    window.requestAnimationFrame(() => {
+      document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [location.hash]);
 
   return (
     <section className={styles.hero}>
@@ -130,7 +139,7 @@ const Hero: React.FC = () => {
           </div>
         </div>
 
-        <h1 className={styles.featureTitle}>
+        <h1 id="features" className={styles.featureTitle}>
           Everything you need to collaborate
         </h1>
 

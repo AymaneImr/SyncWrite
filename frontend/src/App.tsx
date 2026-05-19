@@ -8,6 +8,7 @@ import ProtectedRoute from './common/ProtectedRoute.tsx';
 import LandingPage from './Pages/LandingPage.tsx';
 import ForgotPassword from './Components/ForgotPassword.tsx';
 import GoogleOauthCallback from './Pages/GoogleOauthCallback.tsx';
+import SecurityPage from './Pages/SecurityPage.tsx';
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/reset-password" element={<ForgotPassword mode="reset" />} />
           <Route path="/documents" element={<ProtectedRoute> <DocsPage /> </ProtectedRoute>} />
           <Route path="/editor/:link" element={<ProtectedRoute> <TextEditor /> </ProtectedRoute>} />
+          <Route path="/security" element={<SecurityPage />} />
           <Route path="/" element={<LandingPage />} />
         </Routes>
       </main>
