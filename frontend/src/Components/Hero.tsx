@@ -60,7 +60,7 @@ const Hero: React.FC = () => {
 
   const handleStartEditing = () => {
     if (loggedIn) {
-      navigate("/documents");
+      navigate("/workspace");
     } else {
       navigate("/login");
     }

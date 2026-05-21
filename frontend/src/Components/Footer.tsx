@@ -14,7 +14,7 @@ const footerGroups = [
   {
     title: "Resources",
     links: [
-      { label: "Documentation", href: "https://github.com/AymaneImr/SyncWrite" },
+      { label: "Documentation", href: "/docs" },
       { label: "Help Center", href: "https://github.com/AymaneImr/SyncWrite" },
     ],
   },

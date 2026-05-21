@@ -735,6 +735,7 @@ export default function TextEditor() {
     }
 
     socketRef.current?.close();
+    navigate("/workspace");
 
   };
 
@@ -800,6 +801,8 @@ export default function TextEditor() {
       <div className={styles.menuBarWrapper}>
         <MenuBar
           editor={editor}
+          id={id}
+          token={token}
           link={link}
           canEdit={canEdit}
           onManualSave={() => {

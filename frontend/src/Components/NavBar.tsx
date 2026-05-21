@@ -55,7 +55,7 @@ export default function NavBar() {
 
             <div className={styles.navAuth}>
               {loggedIn && (
-                <Link className={styles.workspaceLink} to="/documents">
+                <Link className={styles.workspaceLink} to="/workspace">
                   Open Workspace
                 </Link>
               )}
