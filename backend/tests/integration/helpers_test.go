@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -303,4 +304,52 @@ func createUserWithUserSession(t *testing.T, schemaPrefix string) (models.User, 
 	}
 
 	return user, accessToken
+}
+
+func createDocumentAccessUsers(t *testing.T, db *gorm.DB) (*models.User, *models.User) {
+	t.Helper()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("test_password"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
+
+	owner := &models.User{
+		Username: "test_owner",
+		Email:    "test_owner@mail.com",
+		Password: string(hashedPassword),
+	}
+
+	if err := db.Create(owner).Error; err != nil {
+		t.Fatalf("failed to create owner: %v", err)
+	}
+
+	user := &models.User{
+		Username: "test_user",
+		Email:    "test_user@mail.com",
+		Password: string(hashedPassword),
+	}
+
+	if err := db.Create(user).Error; err != nil {
+		t.Fatalf("failed to create user: %v", err)
+	}
+
+	return owner, user
+}
+
+func createDocumentAccessDocument(t *testing.T, db *gorm.DB, ownerID uint) *models.Document {
+	t.Helper()
+
+	document := &models.Document{
+		OwnerID: ownerID,
+		Title:   "test_document",
+		Content: json.RawMessage{},
+		Link:    "test_link",
+	}
+
+	if err := db.Create(document).Error; err != nil {
+		t.Fatalf("failed to create document: %v", err)
+	}
+
+	return document
 }

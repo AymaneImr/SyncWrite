@@ -15,14 +15,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
+// TODO: move it to testutils.go
 type TestCases struct {
-	name         string
-	body         map[string]string
+	// more fields will be added with each test use case
+	name string
+
+	// body field is mostly what's being sent as body in an endpoint
+	body         map[string]any
 	expectStatus int
 	expectKey    string
 	expectValue  string
+
+	// setup field is used to create custom short functions
+	// to manage each test case dependencies, this keeps core test function more readable and clean,
+	// refer to setupFunctionReturn to have a clear look at it's output
+	setup func(t *testing.T, db *gorm.DB) setupFunctionReturn
 }
 
 func TestRegisterUser(t *testing.T) {
@@ -30,7 +40,7 @@ func TestRegisterUser(t *testing.T) {
 	cases := []TestCases{
 		{
 			name: "success",
-			body: map[string]string{
+			body: map[string]any{
 				"username":        "test_user",
 				"email":           "test_user@example.com",
 				"password":        "password.123",
@@ -42,7 +52,7 @@ func TestRegisterUser(t *testing.T) {
 		},
 		{
 			name: "password length less than 5 chars",
-			body: map[string]string{
+			body: map[string]any{
 				"username":        "test_user",
 				"email":           "test_user@example.com",
 				"password":        "1234",
@@ -54,7 +64,7 @@ func TestRegisterUser(t *testing.T) {
 		},
 		{
 			name: "password mismatch",
-			body: map[string]string{
+			body: map[string]any{
 				"username":        "test_user",
 				"email":           "test_user@example.com",
 				"password":        "password.123",
@@ -66,7 +76,7 @@ func TestRegisterUser(t *testing.T) {
 		},
 		{
 			name: "missing fields",
-			body: map[string]string{
+			body: map[string]any{
 				"username": "test_user",
 				"email":    "test_user@example.com",
 				"password": "password.123",
@@ -134,7 +144,7 @@ func TestRegisterUser(t *testing.T) {
 				t.Fatal("expected password to be hashed")
 			}
 
-			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tc.body["password"])); err != nil {
+			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tc.body["password"].(string))); err != nil {
 				t.Fatalf("expected passwords to be matched: %v", err)
 			}
 		})
@@ -146,7 +156,7 @@ func TestLogin(t *testing.T) {
 	cases := []TestCases{
 		{
 			name: "success",
-			body: map[string]string{
+			body: map[string]any{
 				"email":    "test_user@example.com",
 				"password": "password.123",
 			},
@@ -156,7 +166,7 @@ func TestLogin(t *testing.T) {
 		},
 		{
 			name: "missing fields",
-			body: map[string]string{
+			body: map[string]any{
 				"email": "test_user@example.com",
 			},
 			expectStatus: http.StatusNotFound,
@@ -165,7 +175,7 @@ func TestLogin(t *testing.T) {
 		},
 		{
 			name: "user not found",
-			body: map[string]string{
+			body: map[string]any{
 				"email":    "test_user2@example.com",
 				"password": "password.123",
 			},
@@ -175,7 +185,7 @@ func TestLogin(t *testing.T) {
 		},
 		{
 			name: "wrong password",
-			body: map[string]string{
+			body: map[string]any{
 				"email":    "test_user@example.com",
 				"password": "password.12",
 			},
@@ -283,7 +293,7 @@ func TestRequestPasswordReset(t *testing.T) {
 	cases := []TestCases{
 		{
 			name: "success",
-			body: map[string]string{
+			body: map[string]any{
 				"email": "test_user@example.com",
 			},
 			expectStatus: http.StatusOK,
@@ -292,14 +302,13 @@ func TestRequestPasswordReset(t *testing.T) {
 		},
 		{
 			name:         "missing fields ",
-			body:         map[string]string{},
 			expectStatus: http.StatusBadRequest,
 			expectKey:    "error",
 			expectValue:  "Missing fields",
 		},
 		{
 			name: "user not found ",
-			body: map[string]string{
+			body: map[string]any{
 				"email": "not_found_user@example.com",
 			},
 			expectStatus: http.StatusNotFound,
@@ -521,7 +530,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 	cases := []TestCases{
 		{
 			name: "success",
-			body: map[string]string{
+			body: map[string]any{
 				"token":           "valid-reset-token",
 				"newPassword":     "password.123",
 				"confirmPassword": "password.123",
@@ -532,7 +541,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		},
 		{
 			name: "missing fields",
-			body: map[string]string{
+			body: map[string]any{
 				"token":       "valid-reset-token",
 				"newPassword": "password.123",
 			},
@@ -542,7 +551,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		},
 		{
 			name: "password mismatch",
-			body: map[string]string{
+			body: map[string]any{
 				"token":           "valid-reset-token",
 				"newPassword":     "password.123",
 				"confirmPassword": "password.12",
@@ -553,7 +562,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 		},
 		{
 			name: "invalid or expired token",
-			body: map[string]string{
+			body: map[string]any{
 				"token":           "wrong-reset-token",
 				"newPassword":     "password.123",
 				"confirmPassword": "password.123",
@@ -651,7 +660,7 @@ func TestConfirmPasswordReset(t *testing.T) {
 			}
 
 			if tc.expectStatus == http.StatusAccepted {
-				if err := bcrypt.CompareHashAndPassword([]byte(updatedUser.Password), []byte(tc.body["newPassword"])); err != nil {
+				if err := bcrypt.CompareHashAndPassword([]byte(updatedUser.Password), []byte(tc.body["newPassword"].(string))); err != nil {
 					t.Fatalf("expected password to be updated: %v", err)
 				}
 
@@ -785,4 +794,3 @@ func TestLogout(t *testing.T) {
 		})
 	}
 }
-

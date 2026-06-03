@@ -16,7 +16,7 @@ func TestCreateDocument(t *testing.T) {
 	cases := []TestCases{
 		{
 			name: "success",
-			body: map[string]string{
+			body: map[string]any{
 				"title": "newDoc",
 			},
 			expectStatus: http.StatusOK,
@@ -25,7 +25,7 @@ func TestCreateDocument(t *testing.T) {
 		},
 		{
 			name: "empty title",
-			body: map[string]string{
+			body: map[string]any{
 				"title": "",
 			},
 			expectStatus: http.StatusOK,
