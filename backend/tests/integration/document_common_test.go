@@ -4,6 +4,7 @@ import (
 	"document_editor/pkg/models"
 	"document_editor/pkg/utils"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -14,8 +15,9 @@ import (
 type setupFunctionReturn struct {
 	// more fields will be added with each test use case
 
-	userID uint
-	docID  uint
+	userID            uint
+	docID             uint
+	documentSessionID uint
 }
 
 func TestCredentialsExists(t *testing.T) {
@@ -79,8 +81,8 @@ func TestHasDocumentAccess(t *testing.T) {
 			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
 				t.Helper()
 
-				owner, _ := createDocumentAccessUsers(t, db)
-				document := createDocumentAccessDocument(t, db, owner.ID)
+				owner, _ := createOwnerAndUser(t, db)
+				document := createDocument(t, db, owner.ID)
 
 				return setupFunctionReturn{
 					userID: owner.ID,
@@ -94,8 +96,8 @@ func TestHasDocumentAccess(t *testing.T) {
 			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
 				t.Helper()
 
-				owner, user := createDocumentAccessUsers(t, db)
-				document := createDocumentAccessDocument(t, db, owner.ID)
+				owner, user := createOwnerAndUser(t, db)
+				document := createDocument(t, db, owner.ID)
 				collaborator := &models.DocumentCollaborator{
 					DocumentID: document.ID,
 					UserID:     user.ID,
@@ -119,7 +121,7 @@ func TestHasDocumentAccess(t *testing.T) {
 			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
 				t.Helper()
 
-				_, user := createDocumentAccessUsers(t, db)
+				_, user := createOwnerAndUser(t, db)
 
 				return setupFunctionReturn{
 					userID: user.ID,
@@ -133,8 +135,8 @@ func TestHasDocumentAccess(t *testing.T) {
 			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
 				t.Helper()
 
-				owner, user := createDocumentAccessUsers(t, db)
-				document := createDocumentAccessDocument(t, db, owner.ID)
+				owner, user := createOwnerAndUser(t, db)
+				document := createDocument(t, db, owner.ID)
 
 				return setupFunctionReturn{
 					userID: user.ID,
@@ -153,9 +155,146 @@ func TestHasDocumentAccess(t *testing.T) {
 			hasAccess := utils.HasDocumentAccess(data.userID, data.docID)
 
 			if hasAccess != (tc.expectStatus == 1) {
-				t.Fatalf("expected access to be %d, got %t", tc.expectStatus, hasAccess)
+				t.Fatalf("expected access to be %t, got %t", (tc.expectStatus == 1), hasAccess)
 			}
 		})
 	}
 
+}
+
+func TestHasActiveDocumentSession(t *testing.T) {
+	cases := []TestCases{
+		{
+			name: "success",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, _ := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+				docSession := createDocumentSession(t, db, owner.ID, doc.ID)
+
+				return setupFunctionReturn{
+					userID:            owner.ID,
+					docID:             doc.ID,
+					documentSessionID: docSession.ID,
+				}
+			},
+			expectStatus: 1,
+		},
+		{
+			name: "session not found",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, _ := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+
+				return setupFunctionReturn{
+					userID: owner.ID,
+					docID:  doc.ID,
+				}
+			},
+			expectStatus: 0,
+		},
+		{
+			name: "session revoked",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, _ := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+				doc_session := createDocumentSession(t, db, owner.ID, doc.ID)
+				doc_session.IsRevoked = true
+				if err := db.Save(doc_session).Error; err != nil {
+					t.Fatalf("failed to update document session: %v", err)
+				}
+
+				return setupFunctionReturn{
+					userID: owner.ID,
+					docID:  doc.ID,
+				}
+			},
+			expectStatus: 0,
+		},
+		{
+			name: "session expired",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, _ := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+				doc_session := createDocumentSession(t, db, owner.ID, doc.ID)
+				doc_session.ExpiresAt = time.Now().Add(-30 * time.Minute).Unix()
+				if err := db.Save(doc_session).Error; err != nil {
+					t.Fatalf("failed to update document session: %v", err)
+				}
+
+				return setupFunctionReturn{
+					userID: owner.ID,
+					docID:  doc.ID,
+				}
+			},
+			expectStatus: 0,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testDB := openMigratedTestDB(t, "has_active_document_session")
+			data := tc.setup(t, testDB)
+
+			active := utils.HasActiveDocumentSession(data.userID, data.docID)
+			if active != (tc.expectStatus == 1) {
+				t.Fatalf("expected document active session to be %t, got %t", (tc.expectStatus == 1), active)
+			}
+		})
+	}
+
+}
+
+func TestRevokeDocumentSession(t *testing.T) {
+	cases := []TestCases{
+		{
+			name: "success",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, _ := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+				docSession := createDocumentSession(t, db, owner.ID, doc.ID)
+
+				return setupFunctionReturn{
+					userID:            owner.ID,
+					docID:             doc.ID,
+					documentSessionID: docSession.ID,
+				}
+			},
+			expectStatus: 1,
+		},
+		{
+			name: "no active session",
+			setup: func(t *testing.T, db *gorm.DB) setupFunctionReturn {
+				owner, user := createOwnerAndUser(t, db)
+				doc := createDocument(t, db, owner.ID)
+				docSession := createDocumentSession(t, db, owner.ID, doc.ID)
+
+				return setupFunctionReturn{
+					userID:            user.ID,
+					docID:             doc.ID,
+					documentSessionID: docSession.ID,
+				}
+			},
+			expectStatus: 0,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			testDB := openMigratedTestDB(t, "revoke_document_session")
+			data := tc.setup(t, testDB)
+
+			if err := utils.RevokeDocumentSession(data.userID, data.docID); err != nil {
+				t.Fatalf("expected RevokeDocumentSession() not to fail, got err: %v", err)
+			}
+
+			var docSession models.DocumentSession
+			if err := testDB.Where("id = ?", data.documentSessionID).First(&docSession).Error; err != nil {
+				t.Fatalf("failed to load document session: %v", err)
+			}
+
+			if docSession.IsRevoked != (tc.expectStatus == 1) {
+				t.Fatalf("expected document session revoked to be %t, got %t", (tc.expectStatus == 1), docSession.IsRevoked)
+			}
+		})
+	}
 }

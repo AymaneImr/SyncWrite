@@ -306,7 +306,7 @@ func createUserWithUserSession(t *testing.T, schemaPrefix string) (models.User, 
 	return user, accessToken
 }
 
-func createDocumentAccessUsers(t *testing.T, db *gorm.DB) (*models.User, *models.User) {
+func createOwnerAndUser(t *testing.T, db *gorm.DB) (*models.User, *models.User) {
 	t.Helper()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("test_password"), bcrypt.DefaultCost)
@@ -337,7 +337,7 @@ func createDocumentAccessUsers(t *testing.T, db *gorm.DB) (*models.User, *models
 	return owner, user
 }
 
-func createDocumentAccessDocument(t *testing.T, db *gorm.DB, ownerID uint) *models.Document {
+func createDocument(t *testing.T, db *gorm.DB, ownerID uint) *models.Document {
 	t.Helper()
 
 	document := &models.Document{
@@ -352,4 +352,25 @@ func createDocumentAccessDocument(t *testing.T, db *gorm.DB, ownerID uint) *mode
 	}
 
 	return document
+}
+
+func createDocumentSession(t *testing.T, db *gorm.DB, ownerID uint, docID uint) *models.DocumentSession {
+	t.Helper()
+
+	token := utils.GenerateSessionToken()
+
+	docSession := &models.DocumentSession{
+		ID:         ownerID,
+		DocumentID: docID,
+		Token:      token,
+		UserID:     ownerID,
+		IsRevoked:  false,
+		ExpiresAt:  time.Now().Add(30 * time.Minute).Unix(),
+	}
+
+	if err := db.Create(docSession).Error; err != nil {
+		t.Fatalf("failed to create document: %v", err)
+	}
+
+	return docSession
 }
