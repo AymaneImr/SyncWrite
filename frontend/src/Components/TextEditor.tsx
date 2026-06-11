@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { FileText, LogOut, Users } from "lucide-react";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
@@ -213,6 +213,7 @@ export default function TextEditor() {
 
   // Active WebSocket connection for live collaboration
   const socketRef = useRef<WebSocket | null>(null);
+  const editorRef = useRef<Editor | null>(null);
   const navigate = useNavigate();
 
   // get the document_id from the url
@@ -224,7 +225,10 @@ export default function TextEditor() {
     (entry) => entry.user_id === currentUser?.user_id
   );
   const canEdit = isOwner || currentCollaborator?.permission === "read-write";
-  const normalizedDocContent = normalizeEditorContent(doc?.Content);
+  const normalizedDocContent = useMemo(
+    () => normalizeEditorContent(doc?.Content),
+    [doc?.Content]
+  );
 
   const scheduleAutosave = () => {
     if (!canEdit || !id || !token) return;
@@ -450,6 +454,10 @@ export default function TextEditor() {
   }, [doc?.id, JSON.stringify(normalizedDocContent)]);
 
   useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  useEffect(() => {
     if (!editor) return;
     editor.setEditable(canEdit);
   }, [editor, canEdit]);
@@ -479,13 +487,14 @@ export default function TextEditor() {
       }
 
       if (data.event === "content") {
-        if (!editor) return;
+        const activeEditor = editorRef.current;
+        if (!activeEditor) return;
         if (data.user_id === currentUser?.user_id) return;
         if (!data.content) return;
 
         try {
           isApplyingRemoteRef.current = true;
-          editor.commands.setContent(data.content);
+          activeEditor.commands.setContent(data.content);
           const serializedRemoteContent = JSON.stringify(normalizeEditorContent(data.content));
           latestContentRef.current = serializedRemoteContent;
           lastSavedContentRef.current = serializedRemoteContent;
@@ -577,7 +586,7 @@ export default function TextEditor() {
     return () => {
       ws.close();
     };
-  }, [id, token, currentUser?.user_id, editor]);
+  }, [id, token, currentUser?.user_id]);
 
   useEffect(() => {
     return () => {
