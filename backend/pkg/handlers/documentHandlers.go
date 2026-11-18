@@ -72,19 +72,23 @@ func LoadDocuments(r *gin.Context) {
 }
 
 func LoadDocument(r *gin.Context) {
-	doc_idStr := r.Param("id")
-	user_id := r.GetUint("user_id")
+	//doc_idStr := r.Param("id")
+	//user_id := r.GetUint("user_id")
 
-	docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
-	doc_id := uint(docID64)
+	// middleware already checks for document
+	doc, _ := r.Get("document")
+	//docID64, _ := strconv.ParseUint(doc_idStr, 10, 64)
+	//doc_id := uint(docID64)
 
-	var doc models.Document
-	err := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
+	/*
+			ar doc models.Document
+			rr := db.Db.Where("id = ? AND owner_id = ?", doc_id, user_id).First(&doc).Error
 
-	if err != nil {
-		r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
-		return
-	}
+			f err != nil {
+			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			return
+		}
+	*/
 
 	r.JSON(http.StatusOK, gin.H{"document": doc})
 }

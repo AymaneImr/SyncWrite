@@ -19,7 +19,8 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.POST("/register", handlers.RegisterUser)                         // TESTED
 		auth.POST("/password-reset/request", handlers.RequestPasswordReset)   // TESTED
 		auth.GET("/password-reset/verify", handlers.VerifyPasswordResetToken) // TESTED
-		auth.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)   // TESTED
+		// NOTE: change it to auth.PUT since we are updating password field
+		auth.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)  // TESTED
 		auth.POST("/logout", utils.Auth(), handlers.Logout)                   // TESTED
 	}
 
@@ -27,8 +28,8 @@ func RegisterRoutes(r *gin.Engine) {
 	docs := r.Group("api/documents")
 	docs.Use(utils.Auth())
 	{
-		docs.POST("/create", handlers.CreateDocument)                                  // works
-		docs.GET(":id/load", utils.DocumentAccess(), handlers.LoadDocument)            // works
+		docs.POST("/create", handlers.CreateDocument)                                  // TESTED
+		docs.GET(":id/load", utils.DocumentAccess(), handlers.LoadDocument)            // TESTED
 		docs.GET("/link/:link/load", handlers.LoadDocumentByLink)                      // works
 		docs.GET("/loadAll", handlers.LoadDocuments)                                   // wORKS
 		docs.GET("/link/:link/open", utils.Auth(), handlers.OpenByLink)                // works

@@ -61,7 +61,7 @@ func RegisterUser(r *gin.Context) {
 	hashed_password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		r.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't hash password"})
+		r.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't hash password"})
 		return
 	}
 

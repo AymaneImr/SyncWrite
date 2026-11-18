@@ -23,6 +23,7 @@ func DocumentAccess() gin.HandlerFunc {
 		var doc models.Document
 		if err := db.Db.Where("id = ?", docID).First(&doc).Error; err != nil {
 			r.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+			r.Abort()
 			return
 		}
 
@@ -38,6 +39,7 @@ func DocumentAccess() gin.HandlerFunc {
 		// Not owner → check if they have an active session
 		if !HasActiveDocumentSession(userID, doc.ID) {
 			r.JSON(http.StatusUnauthorized, gin.H{"error": "Document session expired"})
+			r.Abort()
 			return
 		}
 
@@ -47,6 +49,7 @@ func DocumentAccess() gin.HandlerFunc {
 
 			// User is neither owner nor collaborator → reject
 			r.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this document"})
+			r.Abort()
 			return
 		}
 
